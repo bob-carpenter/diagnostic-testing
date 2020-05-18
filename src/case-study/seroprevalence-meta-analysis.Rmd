@@ -1,0 +1,450 @@
+---
+title: "Seroprevalence and test characteristic meta-analysis"
+author: "Bob Carpenter and Andrew Gelman"
+date: "May 2020"
+output:
+  tufte::tufte_html:
+    toc: true
+    toc_depth: 1
+---
+
+```{r setup, include=FALSE, echo=FALSE}
+options(htmltools.dir.version = FALSE)
+options(digits = 3)
+options("width" = 180)
+
+library(ggplot2)
+
+library(gridExtra)
+
+library(knitr)
+knitr::opts_chunk$set(cache = FALSE)
+knitr::opts_chunk$set(tidy = FALSE, cache.extra = packageVersion('tufte'))
+knitr::opts_chunk$set(comment = "")
+
+library(rstan)
+rstan_options(auto_write = TRUE)
+options(mc.cores = parallel::detectCores(logical = FALSE))
+
+library(tufte)
+
+ggtheme_tufte <- function() {
+  theme(plot.background =
+          element_rect(fill = "#fffff8",
+                       colour = "#fffff8",
+                       size = 0.5,
+                       linetype = "solid"),
+        plot.margin=unit(c(1, 1, 0.5, 0.5), "lines"),
+        panel.background =
+          element_rect(fill = "#fffff8",
+                       colour = "#fffff8",
+                       size = 0.5,
+                       linetype = "solid"),
+        panel.grid.major = element_line(colour = "white", size = 1, linetype="dashed"),
+          # blank(),
+        panel.grid.minor = element_blank(),
+        legend.box.background =
+          element_rect(fill = "#fffff8",
+                       colour = "#fffff8",
+                       linetype = "solid"),
+        axis.ticks = element_blank(),
+        axis.text = element_text(family = "Palatino", size = 16),
+        axis.title.x = element_text(family = "Palatino", size = 20,
+                                    margin = margin(t = 15, r = 0, b = 0, l = 0)),
+        axis.title.y = element_text(family = "Palatino", size = 18,
+                                    margin = margin(t = 0, r = 15, b = 0, l = 0)),
+        strip.background = element_rect(fill = "#fffff8",
+                                        colour = "#fffff8",
+                                        linetype = "solid"),
+        strip.text = element_text(family = "Palatino", size = 16),
+        legend.text = element_text(family = "Palatino", size = 16),
+        legend.title = element_text(family = "Palatino", size = 16,
+                                    margin = margin(b = 5)),
+        legend.background = element_rect(fill = "#fffff8",
+                                        colour = "#fffff8",
+                                        linetype = "solid"),
+        legend.key = element_rect(fill = "#fffff8",
+                                        colour = "#fffff8",
+                                        linetype = "solid")
+  )
+}
+
+printf <- function(msg, ...) cat(sprintf(msg, ...))
+
+
+print_file <- function(file) {
+  cat(paste(readLines(file), "\n", sep=""), sep="")
+}
+```
+
+
+# Introduction
+
+## Sensitivity, specificity, and prevalence
+
+Let the random variable
+
+* $Z \in \{ 0, 1 \}$ represent the disease status of an individual,
+
+where $Z = 1$ indicates the individual is positive for the disease and
+$Z = 0$ indicates they are negative.
+
+The *prevalence* of a disease (in a given [sub]population) is the
+probability of an individual being positive,
+$$
+\textrm{prevalence}
+= \textrm{Pr}[Z = 1].
+$$
+
+Let the random variable
+
+* $Y \in \{ 0, 1 \}$ represent the result of a diagnostic test,
+
+where $Y = 1$ indicates a positive test result and
+$Y = 0$ a negative result.
+
+The *sensitivity* of a test is its accuracy for positive individuals,
+$$
+\textrm{sensitivity}
+= \textrm{Pr}[Y = 1 \mid Z = 1].
+$$
+
+The *specificity* of a test is its accuracy for negative individuals,
+$$
+\textrm{specificity}
+= \textrm{Pr}[Y = 0 \mid Z = 0].
+$$
+
+
+# Data
+
+The data (Bendavid et al. 2020) consists of 17 seroprevalence
+studies
+
+* $N^{\textrm{sens}} = 3$ sensitivty tests of subjects known to be positive,
+* $N^{\textrm{spec}} = 13$ specificity tests of subjects known to be
+negative, and
+* $N^{\textrm{unk}} = 1$ test of subjects of unknown status.
+
+### Sensitivity tests ($Z = 1$)
+
+```{r, echo = FALSE}
+sens_tests <- 3
+sens_vals <-
+c(78, 85,
+  27, 37,
+  25, 35)
+sens_mat <- matrix(sens_vals, nrow = sens_tests, ncol = 2, byrow = TRUE)
+sens_df <- data.frame(pos_tests = sens_mat[ , 1],
+                      tests = sens_mat[ , 2],
+		      sample_sens = sens_mat[ , 1] / sens_mat[ , 2])
+knitr::kable(sens_df)
+```
+
+### Specificity tests ($Z = 0$)
+
+```{r, echo = FALSE}
+spec_tests <- 13
+spec_vals <-
+c(368, 371,
+   30,    30,
+   70,    70,
+  1102, 1102,
+   300,  300,
+   311,  311,
+   500,  500,
+   198,  200,
+    99,   99,
+    29,   31,
+   146,  150,
+   105,  108,
+    50,   52)
+spec_mat <- matrix(spec_vals, nrow = spec_tests, ncol = 2, byrow = TRUE)
+spec_df <- data.frame(neg_tests = spec_mat[ , 1],
+                      tests = spec_mat[ , 2],
+		      sample_spec = spec_mat[ , 1] / spec_mat[ , 2])
+knitr::kable(spec_df)
+```
+
+### Prevalence tests ($Z$ unknown)
+
+```{r, echo = FALSE}
+unk_tests <- 1
+unk_vals <-
+c(50, 3330)
+unk_mat <- matrix(unk_vals, nrow = unk_tests, ncol = 2, byrow = TRUE)
+unk_df <- data.frame(pos_tests = unk_mat[ , 1],
+                     tests = unk_mat[ , 2],
+		     sample_prev = unk_mat[ , 1] / unk_mat[ , 2])
+knitr::kable(unk_df)
+```
+
+## Pooled estimates
+
+The pooled sample sensitivity is
+`r sum(sens_mat[ , 1]) / sum(sens_mat[ , 2])`,
+pooled sample specificity is
+`r sum(spec_mat[ , 1]) / sum(spec_mat[ , 2])`,
+and pooled sample prevalence is
+`r sum(unk_mat[ , 1]) / sum(unk_mat[ , 2])`.
+
+
+# Sensitivity and specificity meta-analysis
+
+Using sensitivity as an example (specificity is identical other than
+some signs), the meta-analysis assumes a test's sensitivity and
+specificity vary by site with normal noise on the log odds scale.  We
+will parameterize sensitivity and specificity using log odds, where
+the *log odds function* $\textrm{logit}:(0, 1) \rightarrow \mathbb{R}$
+is
+$$
+\textrm{logit}(u) = \log \frac{u}{1 - u}.
+$$
+Its inverse is the *logistic function*,
+$\textrm{logit}^{-1}:\mathbb{R} \rightarrow (0, 1),$
+$$
+\textrm{logit}^{-1}(v) = \frac{1}{1 + \exp(-v)}.
+$$
+
+## Varying sensitivity and specificity
+
+The sensitivity of site $k$ will be represented by the variable
+$\theta_{1, k}$ (the $1$ is for sensitivity as opposed to
+specificity).
+
+## Sampling distribution (likelihood)
+
+The tests are assumed to be independent so that the number of positive
+tests at a site may be modeled as binomial,
+$$
+y_k \sim \textrm{binomial_logit}(N_k, \theta_{1, k}).
+$$
+We've used a parameterization of the binomial's chance of success
+parameter on the log odds scale, where
+$$
+\textrm{binomial_logit}(N, \theta)
+= \textrm{binomial}(N, \textrm{logit}^{-1}(\theta)).
+$$
+
+## Hierarchical prior
+
+The model will assume a test sensitivity log odds $\mu_1$ and scale of
+variation $\sigma_1$ such that the sensitivity log odds $\theta_{1, k}$ at site
+$k$ is distributed as
+$$
+\theta_{1, k} \sim \textrm{normal}(\mu_1, \sigma_1)
+$$
+This will pool (or regularize) the estimates $\theta_{1, k}$ toward
+$\mu_1$, with $\sigma_1$ controlling the scale of inter-site variation
+in sensitivity.
+
+As $\sigma_1 \rightarrow 0$, the model approaches a *full pooling
+model* where we assume there is no variation in sensitivity among the
+sites.  As $\sigma_1 \rightarrow \infty$, the model approaches a
+*no-pooling model* where each site's sensitivity is estimated
+independently. The hierarchical model is a *partial pooling model*,
+which determines the amount of pooling to apply from the data by
+controlling the estimate of $\sigma_1$ from the data.
+
+## Hyperpriors
+
+The hyperparameters $\mu_1, \sigma_1$ should get hyperpriors based
+on what we know about this disease and serum testing variation among
+sites.  Assuming we know nothing, we could assume that the
+probability of a correct test, $\textrm{logit}^{-1}(\mu_1)$ has a
+uniform distribution, which has an implied standard logistic
+distribution on the log odds scale,
+$$
+\mu_1 \sim \textrm{logistic}(0, 1).
+$$
+The scale parameter should be consistent with zero, so we do not want
+to give it a lognormal or inverse-gamma family prior.  We do not
+expect a huge variation on the log odds scale, so we can use a simple
+standard half-normal hyperprior on $\sigma_1$,
+$$
+\sigma_1 \sim \textrm{normal}_+(0, 1)
+$$
+
+If more is known about the tests, these hyperpriors should be
+tighter.  Without a lot of data (both per site and number of sites),
+the posteriors will be sensitive to these hyperpriors.
+
+## Predictive inference for new data at existing sites
+
+To predict future test results at site $k$, the probability of getting
+$n$ positive tests out of the next $N$ tests where the subject is
+positive, given observed (training) data $y$, is given by the *posterior
+predictive distribution*,
+\begin{eqnarray*}
+p(n \mid N, k)
+& = &
+\int
+\underbrace{\textrm{binomial_logit}(n \mid N, \theta_{1, k})}
+_{\textrm{sampling uncertainty}}
+\cdot
+\underbrace{p(\theta_{1, k} \mid y)}
+_{\textrm{estimation uncertainty}}
+     \, \textrm{d}{\theta_{1, k}}
+\\[6pt]
+& \approx &
+\frac{1}{M} \sum_{m = 1}^M
+\textrm{binomial_logit}(n \mid N, \theta_{1, k}^{(m)}),
+\end{eqnarray*}
+where
+$$
+\theta_{1, k}^{(m)} \sim p(\theta_{1, k} \mid y)
+$$
+is a draw from the posterior (binomial-logit determines sampling
+uncertainty and drawing from the posterior the estimation
+uncertainty).
+
+
+## Predictive inference for new data at new sites
+
+Suppose we gather data from a new testing site $k'$ not in the
+original data.  The posterior predictive distribution for new data
+is identical in form,
+\begin{eqnarray*}
+p(n \mid N, k')
+& = &
+\int
+\underbrace{\textrm{binomial_logit}(n \mid N, \theta_{1, k'})}
+_{\begin{array}{l}
+  \textrm{sampling} \\
+  \textrm{uncertainty}
+  \end{array}}
+\cdot
+\underbrace{p(\theta_{1, k'} \mid y)}
+_{\begin{array}{l}
+  \textrm{estimation} \\
+  \textrm{uncertainty}
+  \end{array}}
+
+\, \textrm{d}{\theta_{1, k'}}
+\\[6pt]
+& \approx &
+\frac{1}{M} \sum_{m = 1}^M
+\textrm{binomial_logit}(n \mid N, \theta_{1, k'}^{(m)}),
+\end{eqnarray*}
+where $\theta_{1, k'}^{(m)} \sim p(\theta_{1, k'} \mid y)$ is a draw
+from the posterior.
+
+The only difference is that now there is no data informing $\theta_{1,
+k'}$, only the hyperprior parameters $\mu_1, \sigma_1$ estimated
+through the meta-analysis, that is, as $\theta_{1, k'} \sim
+\textrm{normal}(\mu_1, \sigma_1)$.  This allows the sampling for MCMC
+to be refactored as
+$$
+\theta_{1, k'}^{(m)} \sim \textrm{normal}(\mu_1^{(m)},
+\sigma_1^{(m)}),
+$$
+where $\mu_1^{(m)}, \sigma_1^{(m)} \sim p(\mu_1, \sigma_1 \mid y).$
+
+
+# Putting it all together to estimate diseases prevalence
+
+Specificity meta-analysis is identical to sensitivity meta-analysis
+(with some signs reversed).  We can now use the predictive inference
+for sensitivity and specificity in our new site along with the
+observed number of positive tests at the new site to estimate
+prevalence of the disease (in the sampled (sub)population). Suppose we
+have a site with sensitivity $\theta_{1, k}$ and a specificity of
+$\theta_{0, k}$.  If the disease prevalence is $\pi$, the probability
+of getting a positive test result is
+$$
+\mbox{Pr}[y = 1]
+= \pi \cdot \textrm{logit}^{-1}(\theta_{1, k})
+                            + (1 - \pi) \cdot
+			    (1 - \textrm{logit}^{-1}(\theta_{0, k}))
+$$
+For a total of $N$ independent tests, the number of positive tests
+will thus be distributed binomially with the preceding probability of
+success,
+$$
+n \sim \textrm{binomial}\left(N,
+\pi \cdot \textrm{logit}^{-1}(\theta_{1, k})
+                            + (1 - \pi) \cdot
+			    (1 - \textrm{logit}^{-1}(\theta_{0, k}))\right).
+$$
+
+If we assume a simple uniform prior on prevalence $\pi \in (0, 1)$,
+the entire model is
+\begin{eqnarray*}
+\pi & \sim & \textrm{uniform}(0, 1)
+\\
+\mu_0, \mu_1 & \sim & \textrm{logistic}(0, 1)
+\\
+\sigma_0, \sigma_1 & \sim & \textrm{normal}_+(0, 1)
+\\
+\theta_{0, k} & \sim & \textrm{normal}(\mu_0, \sigma_0)
+\\
+\theta_{1, k} & \sim & \textrm{normal}(\mu_1, \sigma_1)
+\\
+n^{\textrm{pos}}_k & \sim & \textrm{binomial}(N^{\textrm{pos}}_k,
+\theta_{1, k})
+\\
+n^{\textrm{neg}}_k & \sim & \textrm{binomial}(N^{\textrm{neg}}_k, \
+\theta_{0, k})
+\\
+n^{\textrm{unk}}_k & \sim &
+\textrm{binomial}\left(N^{\textrm{unk}}_k,
+  \pi \cdot \textrm{logit}^{-1}(\theta_{1, k})
+  + (1 - \pi) \cdot (1 - \textrm{logit}^{-1}(\theta_{0, k}))
+\right)
+\end{eqnarray*}
+Some care is required to avoid clasing $k$ subscripts in an impelementation.
+
+The posterior $p(\pi \mid n^{\textrm{pos}}, N^{\textrm{pos}},
+n^{\textrm{neg}}, N^{\textrm{neg}}, n^{\textrm{unk}},
+N^{\textrm{unk}})$ characterizes what we know about the prevalence of
+the disease given the observed sensitivity data, specificity data, and
+unkown status data.
+
+# Stan Model
+
+Here is the full Stan model implementing this meta-analysis.
+
+```{r, echo = FALSE}
+print_file("meta.stan")
+```
+
+Now we compile it.
+```{r}
+model <- stan_model("meta.stan")
+```
+and then fit
+```{r}
+data <-
+list(sigma_sigma_logit_sens = 0.01,
+     sigma_sigma_logit_spec = 0.01,
+     K_pos = sens_tests,
+     N_pos = sens_df$tests,
+     n_pos = sens_df$pos_tests,
+     K_neg = spec_tests,
+     N_neg = spec_df$tests,
+     n_neg = spec_df$neg_tests,
+     K_unk = unk_tests,
+     N_unk = array(unk_df$tests, dim = c(length(unk_df$tests))),
+     n_unk = array(unk_df$pos_tests, dim = c(length(unk_df$tests))))
+
+fit <- sampling(model, data = data,
+                iter = 4000,
+		control = list(adapt_delta = 0.99),
+		open_progress = FALSE, refresh = 0)
+
+print(fit, probs = c(0.025, 0.5, 0.975), digits = 3, pars = c("pi"))
+```
+
+# References
+
+* Gelman, Andrew.  1 May 2020.  [Simple Bayesian analysis inference of
+  coronavirus infection rate from the Stanford study in Santa Clara
+  county](https://statmodeling.stat.columbia.edu/2020/05/01/simple-bayesian-analysis-inference-of-coronavirus-infection-rate-from-the-stanford-study-in-santa-clara-county/).
+  *Statistical Modeling, Causal Inference, and Social Sciences* blog.
+
+* Eran Bendavid, Bianca Mulaney, Neeraj Sood, Soleil Shah, Emilia Ling,
+Rebecca Bromley-Dulfano, Cara Lai, Zoe Weissberg, Rodrigo
+Saavedra-Walker, Jim Tedrow, Dona Tversky, Andrew Bogan, Thomas
+Kupiec, Daniel Eichner, Ribhav Gupta, John P.A. Ioannidis, Jay
+Bhattacharya. 27 April 2020.  [COVID-19 Antibody Seroprevalence in
+Santa Clara County, California, version 2](https://www.medrxiv.org/content/10.1101/2020.04.14.20062463v2.full.pdf)
