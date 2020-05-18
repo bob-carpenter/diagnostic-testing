@@ -1,6 +1,4 @@
-## Diagnostic Testing in Stan
-
-### Draft Reports
+## Draft Reports
 
 Here are the current drafts of the paper and case study:
 
@@ -10,18 +8,17 @@ Here are the current drafts of the paper and case study:
 * Carpenter, Bob and Andrew
   Gelman.  2020. [Case study of seroprevalence meta-analysis](reports/case-study.html) (DRAFT).
 
-### Source
+## Source Code
 
 Complete data and source code available at
 
 * GitHub repository:
 [bob-carpenter/diagnostic-testing](https://github.com/bob-carpenter/diagnostic-testing)
 
-### Licensing
+### Licenses
 
 * <small>Code copyright Columbia University and Simons Foundation.  Released
 under the [BSD-3 license](https://opensource.org/licenses/BSD-3-Clause).</small>
-
 * <small>Text copyright Andrew Gelman and Bob Carpenter.  Released
   under the
   [CC-BY-ND-NC 4.0 license](https://creativecommons.org/licenses/by-nc-nd/4.0/).</small>
