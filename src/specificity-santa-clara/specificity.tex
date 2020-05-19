@@ -99,8 +99,8 @@ In the example of Bendavid (2020a), prior information on specificity and sensiti
  Fitting this model given the data in that report ($y_{\rm gamma}/n_{\gamma}=399/401$ and $y_{\rm delta}/n_{\delta}=103/122$) yields a wide uncertainty for $p$.  Stan code is in Appendix \ref{stan2}.
 
  \begin{figure}
-   \vspace{2in}
-\caption{\em Summary of inference from model with unknown specificity, sensitivity, and prevalence, based on data from Bendavid et al.\ (2020a):  (a) scatterplot of posterior simulations of prevalence, $\pi$, and specificity, $\gamma$, (b) histogram of posterior simulations of $\gamma$.}
+\centerline{ \includegraphics[width=.45\textwidth]{scatter.pdf} \includegraphics[width=.55\textwidth]{hist.pdf}}
+\caption{\em Summary of inference from model with unknown specificity, sensitivity, and prevalence, based on data from Bendavid et al.\ (2020a):  (a) scatterplot of posterior simulations of prevalence, $\pi$, and specificity, $\gamma$; (b) histogram of posterior simulations of $\gamma$.}
 \label{posterior1}
 \end{figure} 
 
@@ -115,22 +115,37 @@ The above analysis reveals that inference about specificity is key to precise es
  \mbox{logit}(\delta_j) & \sim \mbox{normal}(\mu_{\delta}, \sigma_{\rm delta}).
 \end{align*}
 Stan code is given in Appendix \ref{stan3}.
-This is different from model (\ref{normals}) in that, with data from multiple calibration studies, the hyperparameters $\mu$ and $\sigma$ can be estimated from the data.  In general it could make sense to allow correlation between $\gamma_j$ and $\delta_j$ (Guo, Riebler, and Rue, 2017), but the way the data are currently available to us, specificity and sensitivity are estimated from separate studies and so there is no information about such a correlation.
+This is different from model (\ref{normals}) in that, with data from multiple calibration studies, the hyperparameters $\mu$ and $\sigma$ can be estimated from the data.  In general it could make sense to allow correlation between $\gamma_j$ and $\delta_j$ (Guo, Riebler, and Rue, 2017), but the way the data are currently available to us, specificity and sensitivity are estimated from separate studies and so there is no information about such a correlation.  When coding the model, we use the convention that $j=1$ corresponds to the study of interest, with other $j$'s representing studies of specificity and sensitivity given known samples.
 
 We can also think more about the logistic transform, which allows the unbounded normal distribution to map to the unit interval but might not be appropriate for tests where the specificity can actually reach the value of 1.  Again, we would only expect these sorts of boundary issues to be important when the underlying prevalence is close to zero.
 
- \begin{figure}
-   \vspace{2in}
-  \caption{\em Summary of inferences for the prevalence, specificity, and sensitivity of the Bendavid et al.\ (2020b) experiment, along with inferences for the hyperparameters characterizing the distribution of specificity and sensitivity on the logistic scale.  (a) For the model with weak priors for $\sigma_{\gamma}$ and $\sigma_{\delta}$, the posterior inference for the prevalence, $\pi$, is highly uncertain.  This is driven by the wide uncertainty for the sensitivity, which is driven by the large uncertainty in the hyperparameters for the sensitivity distribution. (b) Stronger priors on  $\sigma_{\gamma}$ and $\sigma_{\delta}$ have the effect of regularizing the specificity and sensitivity parameters, leading to narrower intervals for $\pi$, the parameter of interest in this study.}
+\begin{figure}
+ \begin{small}
+  \centerline{
+    \begin{tabular}{l ccc c ccc}
+      & \multicolumn{3}{c}{Posterior quantiles} && \multicolumn{3}{c}{Posterior quantiles} \\
+      & \multicolumn{3}{c}{with weak prior} && \multicolumn{3}{c}{with stronger prior} \\
+     Parameter & 2.5\% & median & 97.5\% && 2.5\% & median & 97.5\% \\\hline
+     Prevalence, $\pi$ & 0.003 & 0.017 & 0.354 && 0.003 & 0.012 & 0.021 \\
+     Specificity, $\gamma_1$ & 0.986 & 0.998 & 1.000 && 0.988 & 0.995 & 0.998 \\
+     Sensitivity, $\delta_1$ & 0.031 & 0.757 & 0.973 && 0.642 & 0.818 & 0.910 \\
+     $\mu_{\gamma}$ & 4.63 & 5.69 & 7.20 && 4.71 & 5.26 & 5.87 \\
+     $\mu_{\delta}$ & $\!\!\!\!\!-0.55$ & 1.36 & 2.64 && 0.94 & 1.51 & 2.06 \\
+     $\sigma_{\gamma}$ & 0.89 & 1.66 & 2.78 && 0.04 & 0.42 & 0.77 \\ 
+     $\sigma_{\delta}$ & 0.22 & 0.90 & 2.32 && 0.02 & 0.26 & 0.57
+  \end{tabular}
+}
+\end{small}
+  \caption{\em Summary of inferences for the prevalence, specificity, and sensitivity of the Bendavid et al.\ (2020b) experiment, along with inferences for the hyperparameters characterizing the distribution of specificity and sensitivity on the logistic scale.  (a) For the model with weak priors for $\sigma_{\gamma}$ and $\sigma_{\delta}$, the posterior inference for the prevalence, $\pi$, is highly uncertain.  This is driven by the wide uncertainty for the sensitivity, which is driven by the large uncertainty in the hyperparameters for the sensitivity distribution. (b) Stronger priors on  $\sigma_{\gamma}$ and $\sigma_{\delta}$ have the effect of regularizing the specificity and sensitivity parameters, leading to narrower intervals for $\pi$, the parameter of interest in this study.  The hyperparameters $\mu$ and $\sigma$ are on the logistic scale so are difficult to interpret without transformation.}
 \label{posterior2}
 \end{figure} 
 
-We first fit the above model to the data from Bendavid et al.\ (2020b), with weak $\mbox{normal}(0,1)$ priors on $\sigma_{\gamma}$ and $\sigma_{\delta}$.  The results are shown in Figure \ref{posterior2}a.  The 95\% posterior interval for the prevalence is now $(0.00, 0.11)$.  Where does that upper bound come from:  how could an underlying prevalence of 11\% be possible, given that only 1.5\% of the people in the sample tested positive?  The answer can be seen from the huge uncertainty in the sensitivity parameter, which in turn comes from the possibility that $\sigma_{\delta}$ is very large.  The trouble is that the sensitivity information in these data comes from only 3 experiments, which is not enough to get a good estimate of the underlying distribution.  This is a problem discussed by Guo, Riebler, and Rue (2017).
+We first fit the above model to the data from Bendavid et al.\ (2020b), with weak $\mbox{normal}(0,1)$ priors on $\sigma_{\gamma}$ and $\sigma_{\delta}$.  The results are shown in Figure \ref{posterior2}a.  The 95\% posterior interval for the prevalence is now $(0.00, 0.19)$.  Where does that upper bound come from:  how could an underlying prevalence of 19\% be possible, given that only 1.5\% of the people in the sample tested positive?  The answer can be seen from the huge uncertainty in the sensitivity parameter, which in turn comes from the possibility that $\sigma_{\delta}$ is very large.  The trouble is that the sensitivity information in these data comes from only 3 experiments, which is not enough to get a good estimate of the underlying distribution.  This is a problem discussed by Guo, Riebler, and Rue (2017).
 
 The only way to make progress here is to constrain the sensitivity parameters in some way.  One possible strong assumption is to assume that $\sigma_{\delta}$ is some small value. In the current context, it makes sense to consider this assumption, as we can consider it a relaxation of the assumption of Bendavid et al.\ (2020b) that $\sigma_{\delta} = 0$.  We also have reason to believe that specificity will not vary much between experiments, so we will apply a soft constraint to the variation in specificities as well.
 
 We replace the weakly informative $\mbox{normal}^+(0, 1)$ priors on $\sigma_{\gamma}$ and $\sigma_{\delta}$ with something stronger, 
-$\sigma_{\gamma}, \sigma_{\delta}\sim\mbox{normal}^+(0, 0.2)$.  To get a sense of what this means, start with the point estimate from Figure \ref{posterior2}a of $\mu_{\delta}$, which is 1.4. Combining with this new prior implies that there's a roughly 2/3 chance that the sensitivity of the assay in a new experiment is in the range $\mbox{logit}^{-1}(1.4 \pm 0.2)$, which is $(0.77, 0.83)$. This seems reasonable.
+$\sigma_{\gamma}, \sigma_{\delta}\sim\mbox{normal}^+(0, 0.2)$.  To get a sense of what this means, start with the point estimate from Figure \ref{posterior2}a of $\mu_{\delta}$, which is 1.36. Combining with this new prior implies that there's a roughly 2/3 chance that the sensitivity of the assay in a new experiment is in the range $\mbox{logit}^{-1}(1.36 \pm 0.2)$, which is $(0.76, 0.83)$. This seems reasonable.
 
 Figure \ref{posterior2}b shows the results.  Our 95\% interval for $\pi$ is now $(0.003, 0.021)$, that is, the estimated infection rate is estimated to be somewhere between 0.3\% and 2.1\%.
 
