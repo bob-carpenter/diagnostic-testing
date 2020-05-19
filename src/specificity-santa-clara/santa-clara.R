@@ -81,7 +81,8 @@ print(stanfit(fit_3b), pars=c("p", "spec[1]", "sens[1]", "mu_logit_spec", "mu_lo
 
 ## MRP model, and allowing prevalence to vary by sex, ethnicity, age category, and zip code.  Model is set up to use the ethnicity, age, and zip categories of Bendavid et al. (2020).
 
-sc_model_hierarchical_mrp <- cmdstan_model("santa-clara-hierarchical-mrp.stan")
+sc_model_hierarchical_mrp <- cmdstan_model("santa-clara-hierarchical-mrp.stan
+")
 
 # To fit the model, we need individual-level data.  These data are not publcly available, so just to get the program running, we take the existing 50 positive tests and assign them at random to the 3330 people.
 N <- 3330
