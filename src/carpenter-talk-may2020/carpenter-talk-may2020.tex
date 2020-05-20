@@ -1,0 +1,511 @@
+\documentclass[10pt]{report}
+
+\usepackage{stan-talks}
+
+\begin{document}
+\sf%
+\mbox{ }
+\\[12pt]
+\spc{\LARGE\bfseries \color{MidnightBlue}{A meta-analysis of
+    SARS-CoV-2 prevalence}}
+\\[4pt]
+\spc{\large \color{Black}{using the Stan probabilistic
+    programming language}}
+\\[36pt]
+\noindent
+\spc{\large\bfseries \color{MidnightBlue}{Bob Carpenter}}
+\\[2pt]
+\spc{\normalsize Center for Computational Mathematics, Flatiron Institute}
+\vfill
+\noindent
+\spc{\small May 2020} \hfill
+\hfill
+\includegraphics[width=0.4in]{img/new-logo.png}
+
+\sld{What is prevalence?}
+\begin{itemize}
+\item A condition's \myemph{prevalence} is the proportion of the
+  population that has it
+\begin{subitemize}
+\item e.g., if 32 of a population of 1000 has a condition, its
+  prevalence is 3.2\%.
+\end{subitemize}
+\item We'd like to \myemph{estimate} prevalence of individuals
+\begin{enumerate}
+\item with SARS-Cov-2 \myemph{virus},
+\item with COVID-19 \myemph{disease},
+\item who have developed \myemph{antibodies} to SARS-Cov-2, and
+\item who are \myemph{infectious}.
+\end{enumerate}
+\item Viral infection (1) is the focus of this talk
+\end{itemize}
+
+\sld{Why is estimation challenging?}
+\begin{itemize}
+\item Conditions form multiple \myemph{scales}
+\begin{subitemize}
+\item how much virus? which symptoms? how infectious? which antibodies?
+\end{subitemize}
+\item Measurements are \myemph{noisy}
+\begin{subitemize}
+\item \myemph{error}: inaccurate tests, varying accuracy across sites, human
+  judgement, $\ldots$
+\item \myemph{sampling}: extrapolate from sample to population
+\end{subitemize}
+\item Population \myemph{heterogeneity}
+\begin{subitemize}
+\item \myemph{demographics}: sex, age, existing medical conditions $\ldots$
+\item \myemph{behavior}: social distancing, protective measures, food, travel, $\ldots$
+\item \myemph{geo-political}: location, (local) government, climate, $\ldots$
+\item \myemph{temporal}: prevalance evolves over time
+\item \myemph{testing}: availability, assignment, self selection, $\ldots$
+\end{subitemize}
+\end{itemize}
+
+\sld{Understanding sampling uncertainty}
+\begin{itemize}
+\item \myemph{Simulate}: false positive results; N = 100, 2\% false
+  positive rate
+\begin{subitemize}
+\item \myemph{simulated false positives} (100 simulations): \footnotesize{1 2 1 2 0 2 4
+    4 2 3 3 2 3 0 1 1 1 4 2 1 1 4 0 1 1 3 1 0 2 1 8 2 4 2 2 4 1 4
+    0 1 0 0 3 1 5 1 3 3 4 0 3 5 0 3 1 3 2 3 1 0 1 4 2 2 1 0 2 1 1 1 2
+    1 1 3 2 2 3 2 0 1 2 3 1 1 1 2 2 0 2 4 2 2 2 3 3 1 1 4 3 2}
+\item \normalsize \myemph{min} 0 (0\%); \ \myemph{max} 8 (8\%); \
+  \myemph{std dev} 1.4 (1.4\%)
+\end{subitemize}
+\item \myemph{Simulate}: positive status; N = 3000, 1.5\% prevalence
+\begin{subitemize}
+\item \myemph{simulated positives} (100 simulations): \footnotesize{39 51 42 43 52 52 37 47
+    41 51 43 47 47 41 49 43 40 44 46 44 49 50 54 48 31 44 57 40 46 40
+    51 49 48 46 51 40 47 47 42 42 42 40 55 34 40 48 35 39 45 48 42 42
+    45 54 43 40 40 39 48 42 45 36 41 47 40 42 43 41 39 52 47 46
+    43 38 46 31 49 27 39 42 43 46 37 38 36 45 36 47 41 35 49 43 51 45
+    47 34 46 43 46 49}
+\item \normalsize \myemph{min} 27 (0.9\%); \ \myemph{max} 57 (1.9\%); \
+  \myemph{std dev} 5.5 (0.2\%)
+\end{subitemize}
+\end{itemize}
+
+\sld{Sensitivity and specificity of diagnostic tests}
+
+\begin{itemize}
+\item Split accuracy based on status of individuals to account for
+  test biases
+\item \myemph{sensitivity} is accuracy with positive status
+  \hfill  $\textrm{Pr}[\textrm{test} = 1 \mid \textrm{status} = 1]$
+\begin{subitemize}
+\item sensitive tests have low false negative rates
+\end{subitemize}
+\item \myemph{specificity} is accuracy on negative status
+\hfill $\textrm{Pr}[\textrm{test} = 0 \mid \textrm{status} = 0]$
+\begin{subitemize}
+\item specific tests have low false negative rates
+\end{subitemize}
+\item Examples from breast cancer diagnosis
+\begin{subitemize}
+\item \myemph{mammogram, MRI}: high sensitivity, low specificity
+\item \myemph{puncture biopsy}: low sensitivity, high specificity
+\item this profile can't catch breast cancer reliably until it's \myemph{too late}
+\end{subitemize}
+\end{itemize}
+
+\sld{Analyzing Serum PCR tests for SARS-CoV-2}
+\begin{itemize}
+\item \myemph{Sensitivity} tests (known positives)
+\hfill \myemph{Specificity} tests (known negatives)
+\begin{subitemize}
+\item[]
+{\small
+\begin{tabular}[t]{rr|r}
+positives & total & sensitivity \\ \hline
+78 & 85 & 92\% \\
+27 & 37 & 73\% \\
+25 & 35 & 71\% \\
+\end{tabular}
+}
+\hfill
+{\footnotesize
+\begin{tabular}[t]{rr|r}
+negatives & total & specificity \\ \hline
+368     & 371   & 99\% \\
+30      & 30    & 100\% \\
+70      & 70    & 100\% \\
+1102    & 1102  & 100\% \\
+300     & 300   & 100\% \\
+311     & 311   & 100\% \\
+500     & 500   & 100\% \\
+198     & 200   & 99\% \\
+99      & 99    & 100\% \\
+29      & 31    & 94\% \\
+146     & 150   & 97\% \\
+105     & 108   & 97\% \\
+50      & 52    & 96\% \\
+\end{tabular}
+}
+\end{subitemize}
+\vspace*{-84pt}
+\item \myemph{Prevalence test} (unknown status)
+\begin{subitemize}
+\item[]
+{\small
+\begin{tabular}[t]{rr|r}
+positives & total & prevalence \\ \hline
+50 & 3300 & 1.5\%
+\end{tabular}
+}
+\end{subitemize}
+\vspace*{12pt}
+\item \normalsize \myemph{Goal}: estimate of \myemph{SARS-Cov-2 prevalence}
+\end{itemize}
+
+\sld{Adjust for test sensitivity \& specificity}
+\begin{itemize}
+\item Proportion of positive tests in sample must be \myemph{adjusted}.
+\begin{subitemize}
+\item for test sensitivity and specifity
+\end{subitemize}
+\item Expected \myemph{proportion of positive tests} is
+\begin{eqnarray*}
+\textsf{Pr}[\textsf{test} = 1]
+& = &
+\begin{array}[t]{l}
+\textsf{Pr}[\textsf{status} = 1]
+  \times
+  \textsf{Pr}[\textsf{test} = 1 \mid \textsf{status} = 1]
+\\
+\ { } +
+\textsf{Pr}[\textsf{status} = 0]
+  \times
+  \textsf{Pr}[\textsf{test} = 1 \mid \textsf{status} = 0]
+\end{array}
+\\[6pt]
+& = &
+\textsf{prev} \times \textsf{sens}
++ (1 - \textsf{prev}) \times (1 - \textsf{sens}).
+\end{eqnarray*}
+\item \myemph{Solve for expected prevalence} given sensitivity, specificity, positive
+  tests.
+$$
+\textsf{prev}
+= \frac{\displaystyle \textsf{pos} + \textsf{spec} - 1}
+       {\displaystyle \textsf{sens} + \textsf{spec} - 1}
+$$
+\end{itemize}
+
+\sld{Uncertainty behind prevalence estimates}
+\begin{itemize}
+\item Previous slide assumes sensitivity and specificity are known.
+\item Three forms of uncertainty lead to uncertainty in prevalence:
+\begin{subitemize}
+\item test \myemph{sensitivity and specificity are unknown} and
+  estimated from data,
+\item the result of a \myemph{test is uncertain} given the status
+  of an individual, and
+\item tests are applied to \myemph{only a sample} of a population.
+\end{subitemize}
+\item The job of statistics is to \myemph{adjust for bias} and
+  \myemph{quantify uncertainty}
+\begin{subitemize}
+\item it's \myemph{not magic}---it's \myemph{assumption driven}
+\end{subitemize}
+\end{itemize}
+
+\sld{Test sensitivty and specificity varies by site}
+\begin{itemize}
+\item sensitivity and specificity are intrinsically \myemph{anti-correlated}
+\begin{subitemize}
+\item adjusting thresholds trades one for the other
+\end{subitemize}
+\item sensitivity and specificity are \myemph{correlated by site}
+\begin{subitemize}
+\item good procedures increase both; bad procedures decrease both
+\end{subitemize}
+\item perform a \myemph{meta-analysis} with a \myemph{hierarchical
+    model} to
+\begin{subitemize}
+\item estimate \myemph{mean sensitivity and specificity} of the test,
+\item estimate \myemph{each site's} sensitivity and specificity,
+\item let amount of variation among sites control how much to
+  \myemph{pool data}, and
+\item predict behavior in new test sites with no control cases.
+\end{subitemize}
+\end{itemize}
+
+\sld{Stan Code (Data \& Parameters)}
+{\small
+\begin{stancode}
+data {                             parameters {
+  int<lower = 0> K_pos;              real<lower = 0, upper = 1> prev;
+  int<lower = 0> N_pos[K_pos];       vector<lower = 0, upper = 1> sens[K_pos];
+  int<lower = 0> n_pos[K_pos];       vector<lower = 0, upper = 1> spec[K_neg];
+  int<lower = 0> K_neg;              real<lower = 0, upper = 1> mu_sens;
+  int<lower = 0> N_neg[K_neg];       real<lower = 0> kappa_sens;
+  int<lower = 0> n_neg[K_neg];       real<lower = 0, upper = 1> mu_spec;
+                                     real<lower = 0> kappa_spec;
+  int<lower = 0> N_unk;              vector<lower = 0, upper = 1> sens_unk
+  int<lower = 0> n_unk;              vector<lower = 0, upper = 1> spec_unk;
+}                                  }
+\end{stancode}
+}
+
+\sld{Stan Code (Model)}
+{\small
+\begin{stancode}
+model {
+  // hyperprior
+  prev ~ uniform(0, 1);
+  mu_spec, mu_sens ~ beta(9, 1);
+  kappa_sens, kappa_spec ~ exponential(0.5);
+
+  // prior (hierarchical)
+  sens, suns_unk ~ beta(mu_sens * kappa_sens, (1 - mu_sens) * kappa_sens);
+  spec, spec_unk ~ beta(mu_spec * kappa_spec, (1 - mu_spec) * kappa_spec);
+
+  // likelihood
+  n_pos ~ binomial(N_pos, sens);
+  n_neg ~ binomial(N_neg, spec);
+  n_unk ~ binomial(N_unk, prev * sens_unk + (1 - prev) * spec_unk);
+}
+\end{stancode}
+
+\sld{Running Stan Code}
+\begin{itemize}
+\item Can be run from R, Python, Julia, MATLAB, Mathematica, or shell
+\item[] Output for justthe prevalence estimate
+{\small
+\begin{stancode}
+       mean  se_mean     sd   2.5%    50%  97.5%  n_eff  Rhat
+prev  0.013        0  0.003  0.007  0.012  0.019   7795     1
+\end{stancode}
+}
+\item \myemph{95\% posterior interval} is (0.007, 0.019)
+\item Result is highly dependent on breadth of \myemph{sensitivity hyperprior}
+\begin{subitemize}
+\item only 3 sensitivity tests available
+\end{subitemize}
+\item Result does not vary among a range of \myemph{weakly regularizing} hyperpriors
+\begin{subitemize}
+\item e.g, assumiming variation among sites is on the order of
+  1--20\%, but not 50\%.
+\end{subitemize}
+\item Assuming no variation \myemph{underestimates uncertainty}
+\end{itemize}
+
+\sld{Adjusting for non-representative samples}
+\begin{itemize}
+\item Prevalence \myemph{varies in subpopulations}
+\begin{subitemize}
+\item exposure risk by demographics; geographically by population
+  density/travel; differing metabolism by age, sex; political
+  and social effects
+\end{subitemize}
+\item May not have a random sample
+\begin{subitemize}
+\item because of purposeful stratified design; or convenience opt-in sample
+\end{subitemize}
+\item Either way, we use \myemph{multilevel regression} and \myemph{post-stratifification} to adjust
+\begin{subitemize}
+\item[] Step 0. fit a multilevel regression to the data (for regularization/pooling)
+\item[] Step 1. estimate prevalence in each demographic subgroup
+\item[] Step 2. weight prevalence in subgroups by their size
+\end{subitemize}
+\item Simulations in paper; real results awaiting Stanford IRB approval
+\end{itemize}
+
+
+
+\sld{Further Reading}
+\begin{itemize}
+\item \myemph{Project home page}: {\small\tt https://bob-carpenter.github.io/diagnostic-testing}
+\item \myemph{Stan home page}: {\small\tt https://mc-stan.org}
+\item \myemph{Reports} (comments welcome!)
+\begin{subitemize}
+\item
+Gelman, A.\ \& B.\ Carpenter.\ 2020.\
+Bayesian analysis of tests with unknown specificity and
+sensitivity. {\slshape DRAFT.}
+\item
+Carpenter, B.\ \& A.\ Gelman.\ 2020.\ Case study of
+  seroprevalence meta-analysis. {\slshape DRAFT.}
+\item
+Carpenter, B., A.\ Gelman, M.~D.\ Hoffman, et al.\ (2017). Stan:
+  A probabilistic programming language. {\slshape J.\ Stat.\ Soft.}
+  76(1).
+\item
+Carpenter, B.  2016.  Stan case study: Hierarchical partial pooling for repeated
+  binary trials.  {\small\tt https://mc-stan.org/users/documentation/case-studies}
+\end{subitemize}
+\end{itemize}
+
+\sld{Stan Availability and Usage}
+\begin{subitemize}
+\item \myemph{Platforms:} \ Linux, Mac OS X, Windows
+\vspace*{-4pt}
+\item \myemph{Interfaces:} \ R, Python, Julia, MATLAB, Mathematica
+\vspace*{-4pt}
+\item \myemph{Developers (academia \& industry):} 40+ \ {\small (15+ FTEs)}
+\vspace*{-4pt}
+\item \myemph{Users:}\ tens or hundreds of thousands
+\vspace*{-4pt}
+\item \myemph{Companies using:} \ hundreds or thousands
+\vspace*{-4pt}
+\item \myemph{Downloads:}\ millions
+\vspace*{-4pt}
+\item \myemph{User's Group:} \ 3000+ registered; 6000+ non-bot views/day
+\vspace*{-4pt}
+\item \myemph{Books using:} \ 10+
+\vspace*{-4pt}
+\item \myemph{Courses using:} \ 100+
+\vspace*{-4pt}
+\item \myemph{Case studies about:} 100+
+\vspace*{-4pt}
+\item \myemph{Articles using:} \ 5000+
+\vspace*{-4pt}
+\item \myemph{Conferences:} 4 (800+ attendance);  \myemph{StanCon 2020} will be online
+\end{subitemize}
+
+\sld{Some published applications of Stan}
+%
+\begin{subitemize}
+\item \myemph{Physical sciences}: {\footnotesize
+astrophysics, statistical mechanics, particle physics, organic
+chemistry, physical ehmistry, geology, hydrology,
+oceanography, climatology, biogeochemistry, materials science, $\ldots$
+}
+\vspace*{-3pt}
+\item \myemph{Biological sciences}: {\footnotesize
+molecular biology, clinical drug trials, entomology, pharmacology,
+toxicology, opthalmology, neurology, genomics, agriculture, botany, fisheries,
+epidemiology, population ecology, neurology, psychiatry, $\ldots$
+}
+\vspace*{-3pt}
+\item \myemph{Social sciences}: {\footnotesize
+ econometrics (macro and micro), population dynamics, cognitive
+ science, psycholinguistics, social networks, political science,
+ survey sampling, anthropology, sociology, social work, $\ldots$
+}
+\vspace*{-3pt}
+\item \myemph{Other}: {\footnotesize education, public health, A/B testing,
+government, finance, machine learning, transportation logistics,
+electrical engineering, mechanical engineering, civil engineering and transportation,
+actuarial science, sports analytics, advertising attribution, marketing, $\ldots$}
+\end{subitemize}
+
+\sld{Industries using Stan}
+\vspace*{3pt}
+\begin{subitemize}
+\item \myemph{Marketing attribution}: Google, Domino's Pizza, Legendary Ent.
+\item \myemph{Demand forecasting}: Facebook, Salesforce
+\item \myemph{Financial modeling}: Two Sigma, Point72
+\item \myemph{Pharmacology \& CTs}: Novartis, Pfizer, Astra Zeneca
+\item \myemph{(E-)sports analytics}: Tampa Bay Rays, NBA, Sony Playstation
+\item \myemph{Survey sampling}: YouGov, Catalist
+\item \myemph{Agronomy}: Climate Corp., CiBO Analytics
+\item \myemph{Real estate pricing models}: Reaktor
+\item \myemph{Industrial process control}: Fero Labs
+\end{subitemize}
+
+
+\sld{Why is Stan so Popular?}
+\vspace*{3pt}
+\begin{subitemize}
+\item \myemph{Community}: large, friendly, helpful, and sharing
+\item \myemph{Documentation}:  novice to expert; breadth of fields
+\item \myemph{Robustness}:  industrial-strength code; user diagnostics
+\item \myemph{Flexibility}:  highly expressive language;  large math lib
+\item \myemph{Portability}: popular OS, language, and cloud support
+\item \myemph{Extensibility}: developer friendly; derived packages
+\item \myemph{Speed}:  $2-\infty$ orders of magnitude faster
+\item \myemph{Scalability}:  2+ orders of magnitude more scalable
+\item \myemph{Openness}: permissive code and doc licensing
+\end{subitemize}
+
+\end{document}
+
+
+\mypart{}{Motivation}
+\pagestyle{plain}
+
+\sld{Scientists}
+\pagestyle{plain}
+\begin{itemize}
+\item want to \myemph{understand} the world,
+\item bring mechanistic \myemph{theories},
+\item bring data in the form of \myemph{measurements}, and
+\item need to make \myemph{predictions} and \myemph{evaluate theories}.
+\end{itemize}
+
+\sld{Policymakers}
+\begin{itemize}
+\item want to \myemph{control} the social world,
+\item bring hypotheses about \myemph{interventions},
+\item bring data in the form of \myemph{measurements}, and
+\item need to \myemph{make decisions} and \myemph{evaluate impact}.
+\end{itemize}
+
+\sld{Uncertainty}
+\begin{itemize}
+\item \myemph{permeates science} and decision making
+\item in the form of
+\begin{subitemize}
+\item \myemph{sampling} uncertainty,
+\item \myemph{measurement} uncertainty, and
+\item \myemph{modeling} uncertainty.
+\end{subitemize}
+\vfill
+\item The \myemph{alternative to good statistics} is
+\begin{subitemize}
+\item not no statistics,
+\item but \myemph{bad statistics}. \hfill (Bill James)
+\end{subitemize}
+\end{itemize}
+
+\sld{Probability \& Statistics}
+\begin{itemize}
+\item Probability theory uses math to \myemph{quantify uncertainty}.
+\item \myemph{Bayesian statistics} applies probability theory to
+\begin{subitemize}
+\item data {analysis},
+\item {prediction} \& forecasting,
+\item model {evaluation}, and
+\item {decision} theory.
+\end{subitemize}
+\end{itemize}
+
+\sld{This talk}
+\begin{enumerate}
+\item How to combine data, theory, and probability to
+\begin{subitemize}
+\item make \myemph{calibrated predictions},
+\item \myemph{optimal decisions} under uncertainty, and
+\item along the way, solve the \myemph{replication crisis}.
+\end{subitemize}
+\item \myemph{Stan}, an open probabilistic programming framework
+supporting {Bayesian workflow}
+\item Highlights of my \myemph{current projects}
+\end{enumerate}
+
+\mypart{}{Stan}
+
+\sld{What is Stan?}
+%
+\begin{itemize}
+\item a domain-specific \myemph{probabilistic programming language}
+\item Stan \myemph{program} defines a \myemph{differentiable} probability model
+  \begin{subitemize}
+  \item declares data and (constrained) parameter variables
+  \item defines log posterior (or penalized likelihood)
+  \item defines predictive quantities
+  \end{subitemize}
+\item Stan \myemph{inference} fits model \& makes predictions
+  \begin{subitemize}
+  \item MCMC for full Bayesian inference
+  \item variational and Laplace for approximate Bayes
+  \end{subitemize}
+\item \footnotesize Carpenter, B., Gelman, A., Hoffman, M. D., Lee, D., Goodrich, B., Betancourt, M., Marcus Brubaker, Jiqiang Guo, Peter Li, Riddell, A. (2017). Stan: A probabilistic programming language. {\slshape J.\ Stat.\ Soft.} 76(1).
+\end{itemize}
+
+
+
+\end{document}
