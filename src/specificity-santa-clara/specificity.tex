@@ -3,10 +3,10 @@
 \usepackage[utf8]{inputenc}
 \usepackage{amsfonts,url,epsfig,breakurl}
 %%% Document layout, margins
-\usepackage{geometry} 
+\usepackage{geometry}
 \geometry{letterpaper, textwidth=6.5in, textheight=9in, marginparsep=1em}
 %%% Section headings
-\usepackage{sectsty} 
+\usepackage{sectsty}
 \usepackage[normalem]{ulem}
 %\setlength{\baselineskip}{40pt}
 
@@ -19,7 +19,7 @@
 
 
 \sectionfont{\sffamily\bfseries\upshape\large}
-\subsectionfont{\sffamily\bfseries\upshape\normalsize} 
+\subsectionfont{\sffamily\bfseries\upshape\normalsize}
 \subsubsectionfont{\sffamily\mdseries\upshape\normalsize}
 \makeatletter
 \renewcommand\@seccntformat[1]{\csname the#1\endcsname.\quad}
@@ -41,19 +41,19 @@
 \makeatother
 
 
-\title{\bf Bayesian analysis of tests with unknown specificity and sensitivity\footnote{We thank the National Science Foundation, Office of Naval Research, National Institutes of Health, and Schmidt Foundation for financial support.  R and Stan code for the computations in this paper are at **.}\vspace{.1in}}
+\title{\bf Bayesian analysis of tests with unknown specificity and sensitivity\footnote{We thank the National Science Foundation, Office of Naval Research, National Institutes of Health, and Schmidt Foundation for financial support.  R and Stan code for the computations in this paper are at {\tt https://github.com/bob-carpenter/diagnostic-testing}.}\vspace{.1in}}
 
-\author{Andrew Gelman\footnote{Department of Statistics and Department of 
+\author{Andrew Gelman\footnote{Department of Statistics and Department of
 Political Science, Columbia University, New York.}  \ and Bob Carpenter\footnote{Center for Computational Mathematics, Flatiron Institute, New York}
 \vspace{.1in}}
 
-\date{17 May 2020}
+\date{19 May 2020}
 
 \begin{document}\sloppy
 \maketitle
 
 \begin{abstract}
-When testing for a rare disease, prevalence estimates can be highly sensitive to uncertainty in the specificity and sensitivity of the test.  Bayesian inference is a natural way to propagate these uncertainties, with hierarchical modeling capturing variation in these parameters across experiments.  Another concern is the people in the sample not being representative of the general population.  Statistical adjustment cannot without strong assumptions correct for selection bias in an opt-in sample, but multilevel regression and poststratification can at least adjust for known differences between sample and population.  We demonstrate these models with code in R and Stan and discuss their application to a controversial recent study of COVID-19 antibodies in a sample of people from the Stanford University area.  Wide posterior intervals make it impossible to evaluate the quantitative claims of that study regarding the number of unreported infections.  For future studies, the methods described here should facilitate more accurate estimates of disease prevalence from imperfect tests performed on nonrepresentative samples. 
+When testing for a rare disease, prevalence estimates can be highly sensitive to uncertainty in the specificity and sensitivity of the test.  Bayesian inference is a natural way to propagate these uncertainties, with hierarchical modeling capturing variation in these parameters across experiments.  Another concern is the people in the sample not being representative of the general population.  Statistical adjustment cannot without strong assumptions correct for selection bias in an opt-in sample, but multilevel regression and poststratification can at least adjust for known differences between sample and population.  We demonstrate these models with code in R and Stan and discuss their application to a controversial recent study of COVID-19 antibodies in a sample of people from the Stanford University area.  Wide posterior intervals make it impossible to evaluate the quantitative claims of that study regarding the number of unreported infections.  For future studies, the methods described here should facilitate more accurate estimates of disease prevalence from imperfect tests performed on nonrepresentative samples.
 \end{abstract}
 
 \section{Background}
@@ -102,7 +102,7 @@ In the example of Bendavid (2020a), prior information on specificity and sensiti
 \centerline{ \includegraphics[width=.45\textwidth]{scatter.pdf} \includegraphics[width=.55\textwidth]{hist.pdf}}
 \caption{\em Summary of inference from model with unknown specificity, sensitivity, and prevalence, based on data from Bendavid et al.\ (2020a):  (a) scatterplot of posterior simulations of prevalence, $\pi$, and specificity, $\gamma$; (b) histogram of posterior simulations of $\gamma$.}
 \label{posterior1}
-\end{figure} 
+\end{figure}
 
 Figure \ref{posterior1}a shows the joint posterior simulations for $p$ and $\gamma$:  uncertainty in the population prevalence is in large part driven by uncertainty in the specificity.  Figure \ref{posterior1}b shows the posterior distribution for $p$, which reveals that the data and model are consistent with prevalences as low as 0 and as high as nearly 2\%.
 
@@ -131,20 +131,20 @@ We can also think more about the logistic transform, which allows the unbounded 
      Sensitivity, $\delta_1$ & 0.031 & 0.757 & 0.973 && 0.642 & 0.818 & 0.910 \\
      $\mu_{\gamma}$ & 4.63 & 5.69 & 7.20 && 4.71 & 5.26 & 5.87 \\
      $\mu_{\delta}$ & $\!\!\!\!\!-0.55$ & 1.36 & 2.64 && 0.94 & 1.51 & 2.06 \\
-     $\sigma_{\gamma}$ & 0.89 & 1.66 & 2.78 && 0.04 & 0.42 & 0.77 \\ 
+     $\sigma_{\gamma}$ & 0.89 & 1.66 & 2.78 && 0.04 & 0.42 & 0.77 \\
      $\sigma_{\delta}$ & 0.22 & 0.90 & 2.32 && 0.02 & 0.26 & 0.57
   \end{tabular}
 }
 \end{small}
   \caption{\em Summary of inferences for the prevalence, specificity, and sensitivity of the Bendavid et al.\ (2020b) experiment, along with inferences for the hyperparameters characterizing the distribution of specificity and sensitivity on the logistic scale.  (a) For the model with weak priors for $\sigma_{\gamma}$ and $\sigma_{\delta}$, the posterior inference for the prevalence, $\pi$, is highly uncertain.  This is driven by the wide uncertainty for the sensitivity, which is driven by the large uncertainty in the hyperparameters for the sensitivity distribution. (b) Stronger priors on  $\sigma_{\gamma}$ and $\sigma_{\delta}$ have the effect of regularizing the specificity and sensitivity parameters, leading to narrower intervals for $\pi$, the parameter of interest in this study.  The hyperparameters $\mu$ and $\sigma$ are on the logistic scale so are difficult to interpret without transformation.}
 \label{posterior2}
-\end{figure} 
+\end{figure}
 
 We first fit the above model to the data from Bendavid et al.\ (2020b), with weak $\mbox{normal}(0,1)$ priors on $\sigma_{\gamma}$ and $\sigma_{\delta}$.  The results are shown in Figure \ref{posterior2}a.  The 95\% posterior interval for the prevalence is now $(0.00, 0.19)$.  Where does that upper bound come from:  how could an underlying prevalence of 19\% be possible, given that only 1.5\% of the people in the sample tested positive?  The answer can be seen from the huge uncertainty in the sensitivity parameter, which in turn comes from the possibility that $\sigma_{\delta}$ is very large.  The trouble is that the sensitivity information in these data comes from only 3 experiments, which is not enough to get a good estimate of the underlying distribution.  This is a problem discussed by Guo, Riebler, and Rue (2017).
 
 The only way to make progress here is to constrain the sensitivity parameters in some way.  One possible strong assumption is to assume that $\sigma_{\delta}$ is some small value. In the current context, it makes sense to consider this assumption, as we can consider it a relaxation of the assumption of Bendavid et al.\ (2020b) that $\sigma_{\delta} = 0$.  We also have reason to believe that specificity will not vary much between experiments, so we will apply a soft constraint to the variation in specificities as well.
 
-We replace the weakly informative $\mbox{normal}^+(0, 1)$ priors on $\sigma_{\gamma}$ and $\sigma_{\delta}$ with something stronger, 
+We replace the weakly informative $\mbox{normal}^+(0, 1)$ priors on $\sigma_{\gamma}$ and $\sigma_{\delta}$ with something stronger,
 $\sigma_{\gamma}, \sigma_{\delta}\sim\mbox{normal}^+(0, 0.2)$.  To get a sense of what this means, start with the point estimate from Figure \ref{posterior2}a of $\mu_{\delta}$, which is 1.36. Combining with this new prior implies that there's a roughly 2/3 chance that the sensitivity of the assay in a new experiment is in the range $\mbox{logit}^{-1}(1.36 \pm 0.2)$, which is $(0.76, 0.83)$. This seems reasonable.
 
 Figure \ref{posterior2}b shows the results.  Our 95\% interval for $\pi$ is now $(0.003, 0.021)$, that is, the estimated infection rate is estimated to be somewhere between 0.3\% and 2.1\%.
@@ -225,8 +225,8 @@ Going forward, the analyses in this article suggest that future studies should b
 
 \bibitem Gelman, A. (2020).  Simple Bayesian analysis inference of coronavirus infection rate from the Stanford study in Santa Clara county. {\em Statistical Modeling, Causal Inference, and Social Science}, 1 May.  \url{https://statmodeling.stat.columbia.edu/2020/05/01/simple-bayesian-analysis-inference-of-coronavirus-infection-rate-from-the-} \url{stanford-study-in-santa-clara-county}
 
-\bibitem Ghitza, Y., and Gelman, A., (2013). Deep interactions with MRP: Election turnout and voting patterns among small electoral subgroups. {\em American Journal of Political Science} {\bf 57}, 762--776. 
-  
+\bibitem Ghitza, Y., and Gelman, A., (2013). Deep interactions with MRP: Election turnout and voting patterns among small electoral subgroups. {\em American Journal of Political Science} {\bf 57}, 762--776.
+
 \bibitem Gigerenzer, G., Gaissmaier, W., Kurz-Milcke, E., Schwartz, L. M., and Woloshin, S.  (2007).  Helping doctors and patients make sense of health statistics.  {\em Psychological Science in the Public Interest} {\bf 8}, 53--96.
 
 \bibitem Guo, J., Riebler, A., and Rue, H. (2017).  Bayesian bivariate meta-analysis of diagnostic test studies with interpretable priors.  {\em Statistics in Medicine} {\bf 36}, 3039--3058.
@@ -304,7 +304,7 @@ model {
 \end{verbatim}
 \end{quotation}
 \end{small}
-  
+
 \subsection{Hierarchical model for specificities and sensitivities}\label{stan3}
 
   \begin{small}
@@ -432,7 +432,7 @@ generated quantities {
         for (i_male in 0:1){
           count = count + 1;
           p_pop[count] = inv_logit(b[1] + b[2]*(i_male - 0.5) + b[3]*x_zip[i_zip] +
-                                   a_eth[i_eth] + a_age[i_age] + a_zip[i_zip]);      
+                                   a_eth[i_eth] + a_age[i_age] + a_zip[i_zip]);
         }
       }
     }
