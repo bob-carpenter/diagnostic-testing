@@ -8,6 +8,11 @@ Here are the current drafts of the paper and case study:
 * Carpenter, Bob and Andrew
   Gelman.  2020. [Case study of seroprevalence meta-analysis](reports/case-study.html) (DRAFT).
 
+## Talks
+
+* Carpenter, Bob. [A meta-analysis of SARS-CoV-2 prevalence using the Stan probabilistic 
+programming language](reports/carpenter-talk-may2020.pdf)
+
 ## Source Code
 
 Complete data and source code available at
