@@ -41,13 +41,13 @@
 \makeatother
 
 
-\title{\bf Bayesian analysis of tests with unknown specificity and sensitivity\footnote{We thank the National Science Foundation, Office of Naval Research, National Institutes of Health, and Schmidt Foundation for financial support.  R and Stan code for the computations in this paper are at {\tt https://github.com/bob-carpenter/diagnostic-testing}.}\vspace{.1in}}
+\title{\bf Bayesian analysis of tests with unknown specificity and sensitivity\footnote{We thank Julien Riou, Will Fithian, Sander Greenland, Blake McShane, and Joseph Candelora for helpful comments and the National Science Foundation, Office of Naval Research, National Institutes of Health, and Schmidt Foundation for financial support.  R and Stan code for the computations in this paper are at {\tt https://github.com/bob-carpenter/diagnostic-testing}.}\vspace{.1in}}
 
 \author{Andrew Gelman\footnote{Department of Statistics and Department of
 Political Science, Columbia University, New York.}  \ and Bob Carpenter\footnote{Center for Computational Mathematics, Flatiron Institute, New York}
 \vspace{.1in}}
 
-\date{19 May 2020}
+\date{20 May 2020}
 
 \begin{document}\sloppy
 \maketitle
@@ -62,18 +62,18 @@ Correction of diagnostic tests for false positives and false negatives is a well
 
 This is a problem where not fully accounting for uncertainty can make a big difference in scientific conclusions and potential policy recommendations.  In early April, 2020, Bendavid et al.\ (2020a) recruited 3330 residents of Santa Clara County, California and tested them for COVID-19 antibodies.  50 people tested positive, yielding a raw estimate of 1.5\%.  After corrections, Bendavid et al.\ (2020a) reported an uncertainty range of 2.5\% to 4.2\%, implying that the number of infections in the county was between 50 and 85 times the count of cases reported at the time.  Using an estimate of the number of coronavirus deaths in the county up to that time, they computed an implied infection fatality rate (IFR) of 0.12--0.2\%, much lower than IFRs in the range of 0.5\%--1\% that had been estimated from areas with outbreaks of the disease.
 
-The estimates from Bendavid et al.\ (2020a) were controversial, and it turned out that they did not correctly account for uncertainty in the specificity (true positive rate) of the test.  There was also concern about the adjustment they performed for nonrepresentativeness of their sample.  Thus, the controversy arose from statistical adjustment and assessment of uncertainty.  In the present article we set up a Bayesian framework to clarify these issues, setting up and fitting models using the probabilistic programming language Stan (Stan Development Team, 2020).
+The estimates from Bendavid et al.\ (2020a) were controversial, and it turned out that they did not correctly account for uncertainty in the specificity (true positive rate) of the test.  There was also concern about the adjustment they performed for nonrepresentativeness of their sample.  Thus, the controversy arose from statistical adjustment and assessment of uncertainty.  In the present article we set up a Bayesian framework to clarify these issues, setting up and fitting models using the probabilistic programming language Stan (Stan Development Team, 2020).  There is a long literature on Bayesian measurement-error models (for example, Gustafson, 2003); our contribution here is to set up the model, supply code, and consider multilevel regression and poststratification, influence of hyperpriors, and other challenges that arise in the problem of estimating population prevalence using test data from a sample of people.
 
 
 \section{Modeling a test with uncertain sensitivity and specificity}\label{model1}
 
-Testing for a rare disease is a standard textbook example of conditional probability, famous for the following counterintuitive result:  Suppose a person tests positive for a disease, based on a test that has a 95\% accuracy rate, and further suppose that this person is sampled at ramdom from a population with a 1\% prevalence rate.  Then what is the probability that he or she actually has the disease? The usual intuition suggests that the conditional probability should be approximately 95\%, but it is actually, as can be seen from a simple calculation of base rates, as suggested by Gigerenzer et al.\ (2007).  Imagine you test 1000  people:  with a 1\% prevalence rate, we can expect that 10 have the disease and 990 do not.  Then, given the assumed 95\% accuracy rate (assuming this applies to both specificity and sensitivity of the test), we would expect $0.95*10=9.5$ true positives and $0.05*990 =  49.5$ false positives; thus, the proportion of positive tests that are true positives is $9.5/(9.5+49.5) = 0.16$, a number that is difficult to make sense of without visualizing the hypothetical populations of true positive and false positive tests.
+Testing for a rare disease is a standard textbook example of conditional probability, famous for the following counterintuitive result:  Suppose a person tests positive for a disease, based on a test that has a 95\% accuracy rate, and further suppose that this person is sampled at ramdom from a population with a 1\% prevalence rate.  Then what is the probability that he or she actually has the disease? The usual intuition suggests that the conditional probability should be approximately 95\%, but it is actually much lower, as can be seen from a simple calculation of base rates, as suggested by Gigerenzer et al.\ (2007).  Imagine you test 1000  people:  with a 1\% prevalence rate, we can expect that 10 have the disease and 990 do not.  Then, given the assumed 95\% accuracy rate (assuming this applies to both specificity and sensitivity of the test), we would expect $0.95*10=9.5$ true positives and $0.05*990 =  49.5$ false positives; thus, the proportion of positive tests that are true positives is $9.5/(9.5+49.5) = 0.16$, a number that is difficult to make sense of without visualizing the hypothetical populations of true positive and false positive tests.
 
 A related problem is to take the rate of positive tests and use it to estimate the prevalence of the disease.  If the population prevalence is $\pi$ and the test has a specificity of $\gamma$ and a sensitivity of $\delta$, then the expected frequency of positive tests is $p=(1-\gamma)(1- \pi)+ \delta\pi$.  So, given known $\gamma$, $\delta$ and $p$, we can solve for the prevalence,
 \begin{equation}\label{solve}
   \pi=(p + \gamma - 1)/(\delta + \gamma - 1).
   \end{equation}
-  If the properties of the test are known, but $p$ is estimated from a random sample, we can obtain a simple classical estimate by starting with a confidence interval for $p$ and then propagating it through the formula  For example, Bendavid et al.\ (2020) report 50 positive tests out of 3330, which corresponds to an estimate  $\hat{p}=50/3000=0.015$ with standard error $\sqrt{0.015(1-0.015)/3330}=0.002$.  Supposing that their test had a specificity of $\gamma=0.995$ and a sensitivity of $\delta=0.80$, this yields an estimate of $(0.015 + 0.995 - 1)/(0.80 + 0.995 -1) = 0.013$ with standard error $0.002/(0.80 + 0.995 -1) = 0.003$.
+  If the properties of the test are known, but $p$ is estimated from a random sample, we can obtain a simple classical estimate by starting with a confidence interval for $p$ and then propagating it through the formula.  For example, Bendavid et al.\ (2020) report 50 positive tests out of 3330, which corresponds to an estimate  $\hat{p}=50/3000=0.015$ with standard error $\sqrt{0.015(1-0.015)/3330}=0.002$.  Supposing that their test had a specificity of $\gamma=0.995$ and a sensitivity of $\delta=0.80$, this yields an estimate of $(0.015 + 0.995 - 1)/(0.80 + 0.995 -1) = 0.013$ with standard error $0.002/(0.80 + 0.995 -1) = 0.003$.
 
  Two immediate difficulties arise with the classical approach.  First, if the observed rate $\hat{p}$ is less than  $1-\gamma$, the false positive rate of the test, then the estimate from (\ref{solve}) becomes meaninglessly negative.  Second, if there is uncertainty in the specificity and sensitivity parameters, it becomes challenging to propagate uncertainty through the nonlinear expression (\ref{solve}).
 
@@ -83,20 +83,20 @@ First, suppose that estimates and uncertainties for sensitivity and specificity 
 \begin{align}
 \nonumber  y & \sim \mbox{Binomial} (n, p)\\
 \nonumber   p & = (1-\gamma)(1- \pi)+ \delta\pi\\
-\nonumber  \gamma & \sim \mbox{normal}(\mu_{\gamma}, \sigma_{\rm gamma})\\
-\label{normals}  \delta & \sim \mbox{normal}(\mu_{\delta}, \sigma_{\rm delta}),
+\nonumber  \gamma & \sim \mbox{normal}(\mu_{\gamma}, \sigma_{\gamma})\\
+\label{normals}  \delta & \sim \mbox{normal}(\mu_{\delta}, \sigma_{\delta}),
 \end{align}
 and Stan code is given in Appendix \ref{stan1}.
-For simplicity, we have used independent normal prior distributions (with the constraint that both parameters are restricted to the unit interval), but it would be easy enough to use other distributions if prior information were available in that form.
+For simplicity, we have specified independent normal prior distributions (with the constraint that both parameters are restricted to the unit interval), but it would be easy enough to use other distributions if prior information were available in that form.
 
 In the example of Bendavid (2020a), prior information on specificity and sensitivity was given in the form of previous trials, yielding the model,
   \begin{align*}
    y & \sim \mbox{Binomial} (n, p)\\
   p & = (1-\gamma)(1- \pi)+ \delta\pi\\
    y_{\gamma} & \sim \mbox{Binomial} (n_{\gamma}, \gamma)\\
-   y_{\delta} & \sim \mbox{Binomial} (n_{\delta}, p_{\delta}).
+   y_{\delta} & \sim \mbox{Binomial} (n_{\delta}, \delta).
  \end{align*}
- Fitting this model given the data in that report ($y_{\rm gamma}/n_{\gamma}=399/401$ and $y_{\rm delta}/n_{\delta}=103/122$) yields a wide uncertainty for $p$.  Stan code is in Appendix \ref{stan2}.
+ Fitting this model given the data in that report ($y_{\gamma}/n_{\gamma}=399/401$ and $y_{\delta}/n_{\delta}=103/122$) yields a wide uncertainty for $p$.  Stan code is in Appendix \ref{stan2}.
 
  \begin{figure}
 \centerline{ \includegraphics[width=.45\textwidth]{scatter.pdf} \includegraphics[width=.55\textwidth]{hist.pdf}}
@@ -104,20 +104,20 @@ In the example of Bendavid (2020a), prior information on specificity and sensiti
 \label{posterior1}
 \end{figure}
 
-Figure \ref{posterior1}a shows the joint posterior simulations for $p$ and $\gamma$:  uncertainty in the population prevalence is in large part driven by uncertainty in the specificity.  Figure \ref{posterior1}b shows the posterior distribution for $p$, which reveals that the data and model are consistent with prevalences as low as 0 and as high as nearly 2\%.
+Figure \ref{posterior1}a shows the joint posterior simulations for $p$ and $\gamma$:  uncertainty in the population prevalence is in large part driven by uncertainty in the specificity.  Figure \ref{posterior1}b shows the posterior distribution for $\pi$, which reveals that the data and model are consistent with prevalences as low as 0 and as high as nearly 2\%.
 
 The asymmetric posterior distribution with its hard bound at zero suggests that the usual central 95\% interval will not be a good inferential summary.  Instead we use highest posterior density or shortest posterior interval, for reasons discussed in Liu, Gelman, and Zheng (2015). The resulting 95\% interval for $\pi$ is (0, 1.8\%), which is much different from the interval (1.1\%, 2.0\%) reported by Bendavid et al.\ (2020a).  As a result, the substantive conclusion from that earlier report has been overturned. From the given data, the uncertainty in the specificity is large enough that the data do not supply strong evidence of a substantial prevalence.
 
 \section{Hierarchical model for varying testing conditions}\label{model2}
 The above analysis reveals that inference about specificity is key to precise estimation of low prevalence rates.  In the second version of their report, Bendavid et al.\ (2020b) include data from 13 specificity studies and 3 sensitivity studies.  Sensitivity and specificity can vary across experiments, so it is not appropriate to simply pool the data from these separate studies.  Instead, we set up a hierarchical model where, for any study $j$, the specificity $\gamma_j$ and sensitivity $\delta_j$ are drawn from normal distributions on the logistic scale,
 \begin{align*}
-  \mbox{logit}(\gamma_j) & \sim \mbox{normal}(\mu_{\gamma}, \sigma_{\rm gamma})\\
- \mbox{logit}(\delta_j) & \sim \mbox{normal}(\mu_{\delta}, \sigma_{\rm delta}).
+  \mbox{logit}(\gamma_j) & \sim \mbox{normal}(\mu_{\gamma}, \sigma_{\gamma})\\
+ \mbox{logit}(\delta_j) & \sim \mbox{normal}(\mu_{\delta}, \sigma_{\delta}).
 \end{align*}
 Stan code is given in Appendix \ref{stan3}.
 This is different from model (\ref{normals}) in that, with data from multiple calibration studies, the hyperparameters $\mu$ and $\sigma$ can be estimated from the data.  In general it could make sense to allow correlation between $\gamma_j$ and $\delta_j$ (Guo, Riebler, and Rue, 2017), but the way the data are currently available to us, specificity and sensitivity are estimated from separate studies and so there is no information about such a correlation.  When coding the model, we use the convention that $j=1$ corresponds to the study of interest, with other $j$'s representing studies of specificity and sensitivity given known samples.
 
-We can also think more about the logistic transform, which allows the unbounded normal distribution to map to the unit interval but might not be appropriate for tests where the specificity can actually reach the value of 1.  Again, we would only expect these sorts of boundary issues to be important when the underlying prevalence is close to zero.
+We could also consider alternatives to the logistic transform, which allows the unbounded normal distribution to map to the unit interval but might not be appropriate for tests where the specificity can actually reach the value of 1.  Again, we would only expect these sorts of boundary issues to be important when the underlying prevalence is close to zero.
 
 \begin{figure}
  \begin{small}
@@ -140,14 +140,14 @@ We can also think more about the logistic transform, which allows the unbounded 
 \label{posterior2}
 \end{figure}
 
-We first fit the above model to the data from Bendavid et al.\ (2020b), with weak $\mbox{normal}(0,1)$ priors on $\sigma_{\gamma}$ and $\sigma_{\delta}$.  The results are shown in Figure \ref{posterior2}a.  The 95\% posterior interval for the prevalence is now $(0.00, 0.19)$.  Where does that upper bound come from:  how could an underlying prevalence of 19\% be possible, given that only 1.5\% of the people in the sample tested positive?  The answer can be seen from the huge uncertainty in the sensitivity parameter, which in turn comes from the possibility that $\sigma_{\delta}$ is very large.  The trouble is that the sensitivity information in these data comes from only 3 experiments, which is not enough to get a good estimate of the underlying distribution.  This is a problem discussed by Guo, Riebler, and Rue (2017).
+We first fit the above model to the data from Bendavid et al.\ (2020b), with weak $\mbox{normal}(0,1)$ priors on $\sigma_{\gamma}$ and $\sigma_{\delta}$.  The results are shown in Figure \ref{posterior2}a.  The 95\% posterior interval for the prevalence is now $(0.00, 0.35)$.  Where does that upper bound come from:  how could an underlying prevalence of 35\% be possible, given that only 1.5\% of the people in the sample tested positive?  The answer can be seen from the huge uncertainty in the sensitivity parameter, which in turn comes from the possibility that $\sigma_{\delta}$ is very large.  The trouble is that the sensitivity information in these data comes from only 3 experiments, which is not enough to get a good estimate of the underlying distribution.  This is a problem discussed by Guo, Riebler, and Rue (2017).
 
 The only way to make progress here is to constrain the sensitivity parameters in some way.  One possible strong assumption is to assume that $\sigma_{\delta}$ is some small value. In the current context, it makes sense to consider this assumption, as we can consider it a relaxation of the assumption of Bendavid et al.\ (2020b) that $\sigma_{\delta} = 0$.  We also have reason to believe that specificity will not vary much between experiments, so we will apply a soft constraint to the variation in specificities as well.
 
 We replace the weakly informative $\mbox{normal}^+(0, 1)$ priors on $\sigma_{\gamma}$ and $\sigma_{\delta}$ with something stronger,
 $\sigma_{\gamma}, \sigma_{\delta}\sim\mbox{normal}^+(0, 0.2)$.  To get a sense of what this means, start with the point estimate from Figure \ref{posterior2}a of $\mu_{\delta}$, which is 1.36. Combining with this new prior implies that there's a roughly 2/3 chance that the sensitivity of the assay in a new experiment is in the range $\mbox{logit}^{-1}(1.36 \pm 0.2)$, which is $(0.76, 0.83)$. This seems reasonable.
 
-Figure \ref{posterior2}b shows the results.  Our 95\% interval for $\pi$ is now $(0.003, 0.021)$, that is, the estimated infection rate is estimated to be somewhere between 0.3\% and 2.1\%.
+Figure \ref{posterior2}b shows the results.  Our 95\% interval for $\pi$ is now $(0.003, 0.021)$, that is, the infection rate is estimated to be somewhere between 0.3\% and 2.1\%.
 
 
  \section{Extensions of the model}
@@ -157,26 +157,32 @@ Figure \ref{posterior2}b shows the results.  Our 95\% interval for $\pi$ is now 
 Bendavid et al.\ compared demographics on 3330 people they tested, and they found differences in the distributions of sex, age, ethnicity, and zip code of residence compared to the general population of Santa Clara County. It would be impossible to poststratify the raw data on 2 sexes, 4 ethnicity categories,  4 age categories, and 58 zip codes, as the resulting 1856 cells would greatly outnumber the positive tests in the data.  Bendavid (2020a,b) adjusted for sex $\times$ ethnicity $\times$ zip code, but their analysis is questionable, first because they did not adjust for age, and second because of noisy weights arising from the variables they did adjust for.
 To obtain stable estimates while adjusting for all these variables, we would recommend applying a multilevel model to the exposure probability, thus replacing the constant $\pi$ in the above models with something like this logistic regression:
 \begin{equation*}
-\pi_i = \mbox{logit}^{-1}(\beta_1 + \beta_2*\rm{male} + \beta_3*x^{\rm zip}_{\rm zip[i]} + \alpha^{\rm eth}_{\rm eth[i]} + \alpha^{\rm age}_{\rm age[i]} + \alpha^{\rm zip}_{\rm zip[i]}),
+\pi_i = \mbox{logit}^{-1}(\beta_1 + \beta_2*\mbox{\it male} + \beta_3*x^{\it zip}_{\it zip[i]} + \alpha^{\it eth}_{\it eth[i]} + \alpha^{\it age}_{\it age[i]} + \alpha^{\it zip}_{\it zip[i]}),
 \end{equation*}
-where male is a variable that takes on the value $-0.5$ for women $+0.5$ for men; $x^{\rm zip}$ is a relevant predictor at the zip code level; eth[i], age[i], and zip[i] are index variables for the survey respondents $i$; the $\beta$'s are logistic regression coefficients, and the $\alpha$'s are vectors of varying intercepts:
+where {\it male} is a variable that takes on the value 0 for women and 1 for men; $x^{\it zip}$ is a relevant predictor at the zip code level; $eth[i]$, $age[i]$, and $zip[i]$ are index variables for the survey respondents $i$; the $\beta$'s are logistic regression coefficients; and the $\alpha$'s are vectors of varying intercepts:
 \begin{align*}
-  \alpha^{\rm name} &\sim \mbox{normal}(0, \sigma_{\rm name}),\mbox{ for } \mbox{name} = \mbox{eth, age, zip}.
+  \alpha^{\it name} &\sim \mbox{normal}(0, \sigma_{\it name}),\mbox{ for } \mbox{\it name} = \mbox{\it eth, age, zip}.
 \end{align*}
-It will be important to include the predictor $x^{\rm zip}$, which in this example might be percent Latino or average income in the zip code.  Otherwise, with so many zip codes, the multilevel model will just partially pool most of the zip code adjustments to zero, and not much will be gained from the geographic poststratification.
 
-The above model is a start; it coud be improved by including interactions, following the general ideas of Ghitza and Gelman (2013),  In any case, once this model has been fit, it can be used to make inferences for disease prevalence for all cells in the population, and these cell estimates can then be summed, weighting by known population totals (in this case, the number of people in each sex $\times$ ethnicity $\times$ age $\times$ zip code category in the population) to get inferences for the prevalence in the county.  Here we are implicitly assuming that the data represent a random sample within poststratification cells.
+It is important to include the predictor $x^{\it zip}$, which in this example might be percent Latino or average income in the zip code.  Otherwise, with so many zip codes, the multilevel model will just partially pool most of the zip code adjustments to zero, and not much will be gained from the geographic poststratification.  The importance of geographic predictors is well known in the MRP literature; see, for example, Caughey and Warshaw (2019).
 
-In addition, priors are needed for $\sigma_{\rm eth}, \sigma_{\rm age},\sigma_{\rm zip}$, and $\beta$, along with the hierarchical specificity and sensitivity parameters from the earlier model.
+The above model is a start; it coud be improved by including interactions, following the general ideas of Ghitza and Gelman (2013).  In any case, once this model has been fit, it can be used to make inferences for disease prevalence for all cells in the population, and these cell estimates can then be summed, weighting by known population totals (in this case, the number of people in each sex $\times$ ethnicity $\times$ age $\times$ zip code category in the population) to get inferences for the prevalence in the county.  Here we are implicitly assuming that the data represent a random sample within poststratification cells.
 
-We coded this model in Stan (see Appendix \ref{stan4}).  Unfortunately the raw data from Bendavid et al.\  are not currently available, so we fit the model to simulated data to check the stability of the computation.  We used a $\mbox{normal}(0,2.5)$ prior for $\beta_1$ (corresponding to an approximate 95\% prior interval of $(0.7\%, 99.3\%)$ for the prevalence), a $\mbox{normal}(0,0.5)$ prior for $\beta_2$, and $\mbox{normal}^+(0, 0.5)$ priors for $\sigma_{\rm eth}, \sigma_{\rm age},\sigma_{\rm zip}$.  These priors allow the prevalence to vary moderately by these poststratification variables.
+In addition, priors are needed for $\sigma_{\it eth}, \sigma_{\it age},\sigma_{\it zip}$, and $\beta$, along with the hierarchical specificity and sensitivity parameters from the earlier model.  
 
-Once the above model has been fit, it implies inferences for the prevalence in each of the $2\times 4 \times 4 \times 58$ poststratification cells, and these can be averaged to get a population prevalence:  $p_{\rm avg} = \sum_jN_jp_j/\sum_jN_j$, where $N_j$ is the number of people in cell $j$ in the general population, and $p_i$ is the prevalence as computed from the logistic model.  We perform this summation in the generated quantities block of the Stan model in Appendix \ref{stan4}.
+We code the model in Stan; see Appendix \ref{stan4}.  Unfortunately the raw data from Bendavid et al.\  are not currently available, so we fit the model to simulated data to check the stability of the computation.  We use a $\mbox{normal}(0,2.5)$ prior for the centered intercept  $\beta_1 + \beta_2\overline{\it male} + \beta_3\overline{x}^{\it zip}$ (corresponding to an approximate 95\% prior interval of $(0.7\%, 99.3\%)$ for the probability that an average person in the sample has the antibody), a $\mbox{normal}(0,0.5)$ prior for $\beta_2$, and $\mbox{normal}^+(0, 0.5)$ priors for $\sigma_{\it eth}, \sigma_{\it age},\sigma_{\it zip}$.  These priors allow the prevalence to vary moderately by these poststratification variables.
+
+Once the above model has been fit, it implies inferences for the prevalence in each of the $2\times 4 \times 4 \times 58$ poststratification cells, and these can be averaged to get a population prevalence:  $p_{\it avg} = \sum_jN_jp_j/\sum_jN_j$, where $N_j$ is the number of people in cell $j$ in the general population, and $p_i$ is the prevalence as computed from the logistic model.  We perform this summation in the generated quantities block of the Stan model in Appendix \ref{stan4}.
 
 \subsection{Variation across location and over time}\label{muiltiple}
-The aforementioned Santa Clara County study is just one of many recent COVID-19 antibody surveys.  Other early studies were conducted in Boston, New York, Los Angeles, and Miami, and in many places outside the United States, and we can expect many more in the future.  If the raw data from these studies were combined, it should be possible to estimate the underlying prevalences from all these studies using a hierarchical model, allowing specificity, sensitivity, and prevalence to vary by location.  Such an analysis is performed by Levesque and Maybury (2020) using detailed information on the different tests used in different studies.
+The aforementioned Santa Clara County study is just one of many recent COVID-19 antibody surveys.  Other early studies were conducted in Boston, New York, Los Angeles, and Miami, and in various places outside the United States, and we can expect many more in the future.  If the raw data from these studies were combined, it should be possible to estimate the underlying prevalences from all these studies using a hierarchical model, allowing specificity, sensitivity, and prevalence to vary by location, and adjusting for nonsampling error where possible.  Such an analysis is performed by Levesque and Maybury (2020) using detailed information on the different tests used in different studies.
 
-We will also be seeing more studies of changing infection rates over time.  Stringhini et al.\ (2020) perform usch an analysis of weekly surveys in Geneva, Switzerland, accounting for specificity and sensitivity and poststratifying by sex and age.
+We will also be seeing more studies of changing infection rates over time.  Stringhini et al.\ (2020) perform such an analysis of weekly surveys in Geneva, Switzerland, accounting for specificity and sensitivity and poststratifying by sex and age.
+
+\subsection{Including additional diagnostic data}
+We have so far assumed that test results are binary, but additional information can be gained from continuous measurements that make use of partial information when data are near detection limits (Gelman, Chew, and Shnaidman, 2004; Bouman, Bonhoeffer, and Regoes, 2020).  Further progress can be made by performing different sorts of tests on study participants or retesting observed positive results.
+
+Another promising direction is to include additional information on people in the study, for example from self-reported symptoms.  Some such data are reported in Bendavid et al.\ (2020b), although not at the individual level. With individual-level symptom and test data, a model with multiple outcomes could yield substantial gains in efficiency compared to the existing analysis using only a single positive/negative test result on each participant.
 
 \section{Non-Bayesian approaches}
 As with any statistical analysis, alternative approaches are possible that would give similar results.
@@ -184,6 +190,8 @@ As with any statistical analysis, alternative approaches are possible that would
 In Section \ref{model1}, it was necessary to (a) account for uncertainty in all three parameters and (b) respect the constraint that all three probabilities had to be between 0 and 1.  We assume that both these aspects of the model could have been incorporated into a non-Bayesian approach by working out the region in the space of $(\pi,\gamma,\delta)$ that was consistent with the data and then constructing a family of tests which could be inverted to create confidence regions.
 
 This could be expanded into a multilevel model as in Section \ref{model2} by considering the specificities and sensitivities of the different experiments as missing data and averaging over their distribution, but still applying non-Bayesian inference to the resulting hyperparameters.  The wide uncertainty intervals from the analysis in Section \ref{model2} suggest that some constraints or regularization or additional information on the hyperparameters would be necessary to get stable inferences here, no matter what statistical approach is used.
+
+Fithian (2020) performs a non-Bayesian analysis of the data from Bendavid et al.\ (2020b), coming to the same basic conclusion that we do, demonstrating that the calibration data are incompatible with a model of constant specificity and that, once the specificity is allowed to vary, the observed rate of positive tests in the Santa Clara study does not allow rejection of the null hypothesis of zero infection rate.  Had it been possible to reject zero, this would not be the end of the story:  at that point one could invert a family of tests to obtain a confidence region, as noted above.
 
 Finally, some rough equivalent to the poststratification adjustment in Section \ref{mrp} could be performed using a non-Bayesian weighting approach, using some smoothing to avoid the noisiness of raw poststratification weights.  Similarly, non-Bayesian methods could be used to fit regressions allowing prevalence to vary over location and time.
 
@@ -195,7 +203,7 @@ Finally, some rough equivalent to the poststratification adjustment in Section \
 
 Epidemiology in general, and disease testing in particular, features latent parameters with high levels of uncertainty, difficulty in measurement, and uncertainty about the measurement process as well.  This is the sort of setting where it makes sense to combine information from multiple studies, using Bayesian inference and hierarchical models, and where inferences can be sensitive to assumptions.
 
-The biggest assumptions in this analysis are, first, that the historical specificity and sensitivity data are relevant to the current experiment; and, second, that the people in the study are a representative sample of the general population.  We addressed the first concern with a hierarchical model of varying sensitivities and specificities, and we addressed the second concern with multilevel regression and poststratification on demographics and geography.  But this modeling can take us only so far.  If there is hope or concern that the current experiment is has unusual measurement properties, or that the sample is unrepresentative in ways not accounted for in the regression, then more information or assumptions need to be included in the model.
+The biggest assumptions in this analysis are, first, that the historical specificity and sensitivity data are relevant to the current experiment; and, second, that the people in the study are a representative sample of the general population.  We addressed the first concern with a hierarchical model of varying sensitivities and specificities, and we addressed the second concern with multilevel regression and poststratification on demographics and geography.  But this modeling can take us only so far.  If there is hope or concern that the current experiment is has unusual measurement properties, or that the sample is unrepresentative in ways not accounted for in the regression, then more information or assumptions need to be included in the model, as in Campbell et al.\ (2020).
 
 The other issue is that there are choices of models, and tuning parameters within each model.  Sensitivity to the model is apparent in Bayesian inference, but it would arise with any other statistical method as well.  For example, Bendavid et al.\ (2020a) used an (incorrectly applied) delta method to propagate uncertainty, but this is problematic when sample size is low and probabilities are near 0 or 1.  Bendavid  et al.\ (2020b) completely pooled their specificity and sensitivity experiments, which is equivalent to setting $\sigma_{\gamma}$ and $\sigma_{\delta}$ to zero.  And their weighting adjustment has many arbitrary choices.  We note these not to single out these particular authors but rather to emphasize that, at least for this problem, all statistical inferences involve user-defined settings.
 
@@ -208,11 +216,9 @@ The inference depends strongly on the priors on the distributions of sensitivity
 
 What about the claims regarding the rate of coronavirus exposure and implications for the infection fatality rate?  It's hard to say from this one study:  the numbers in the data are consistent with zero infection rate and a wide variation in specificity and sensitivity across tests, and the numbers are also consistent with the claims made in Bendavid et al.\ (2020a,b). That does not mean anyone thinks the true infection rate is zero.  It just means that more data, assumptions, and subject-matter knowledge are required. That's ok---people usually make lots of assumptions in this sort of laboratory assay. It's common practice to use the manufacturer's numbers on specificity, sensitivity, detection limit, and so forth, and not worry about that level of variation. It's only when you are estimating a very low underlying rate that the statistical challenges become so severe.
 
-One way to go beyond the ideas of this paper would be to include additional information on patients, for example from self-reported symptoms.  Some such data are reported in Bendavid et al.\ (2020b), although not at the individual level. With individual-level symptom and test data, a model with multiple outcomes which could yield substantial gains in efficiency compared to the existing analysis using only the positive/negative test result.
-
 For now, we do not think the data support the claim that the number of infections in Santa Clara County was between  50 and 85 times the count of cases reported at the time, or the implied interval for the IFR of 0.12--0.2\%.  These numbers are consistent with the data, but the data are also consistent with a near-zero infection rate in the county.  The data of Bendavid et al.\ (2020a,b) do not provide strong evidence about the number of people infected or the infection fatality ratio; the number of positive tests in the data is just too small, given uncertainty in the specificity of the test.
 
-Going forward, the analyses in this article suggest that future studies should be conducted with full awareness of the challenges of measuring specificity and sensitivity, that relevant variables be collected on study participants to allow inference for the general population, and that (de-identified) data be accessible to external researchers.
+Going forward, the analyses in this article suggest that future studies should be conducted with full awareness of the challenges of measuring specificity and sensitivity, that relevant variables be collected on study participants to facilitate inference for the general population, and that (de-identified) data be made accessible to external researchers.
 
 
 \section*{References}
@@ -223,13 +229,25 @@ Going forward, the analyses in this article suggest that future studies should b
 
 \bibitem  Bendavid, E., Mulaney, B., Sood, N., Shah, S., Ling, E., Bromley-Dulfano, R., Lai, C.,  Weissberg, Z., Saavedra-Walker, R., Tedrow, J., Tversky, D., Bogan, A., Kupiec, T., Eichner, D., Gupta, R., Ioannidis, J., and Bhattacharya, J. (2020b).  COVID-19 antibody seroprevalence in Santa Clara County, California, version 2. \url{https://www.medrxiv.org/content/10.1101/2020.04.14.20062463v2.full.pdf}
 
+\bibitem Bouman, J. A., Bonhoeffer, S., and Regoes, R. R.  (2020).  Estimating seroprevalence with imperfect serological tests: a cutoff-free approach.  \url{https://www.biorxiv.org/content/10.1101/2020.04.29.068999v2}
+
+\bibitem Campbell, H., de Valpine, P., Maxwell, L., de Jong, V. M. T., Debray, T., Jänisch, T., and Gustafson, P. (2000).  Bayesian adjustment for preferential testing in estimating the COVID-19 infection fatality rate: Theory and methods.  \url{https://arxiv.org/abs/2005.08459}
+
+\bibitem Caughey, D., and Warshaw, C. (2019).  Public opinion in subnational politics.  {\em Journal of Politics} {\bf 81}, 352--363.
+
+\bibitem Fithian, W. (2020).  Statistical comment on the revision of Bendavid et al. \url{https://www.stat.berkeley.edu/~wfithian/overdispersionSimple.html}
+  
 \bibitem Gelman, A. (2020).  Simple Bayesian analysis inference of coronavirus infection rate from the Stanford study in Santa Clara county. {\em Statistical Modeling, Causal Inference, and Social Science}, 1 May.  \url{https://statmodeling.stat.columbia.edu/2020/05/01/simple-bayesian-analysis-inference-of-coronavirus-infection-rate-from-the-} \url{stanford-study-in-santa-clara-county}
+
+  \bibitem Gelman, A., Chew, G., and Shnaidman, M. (2004).  Bayesian analysis of serial dilution assays. {\em Biometrics} {\bf 60}, 407--417.
 
 \bibitem Ghitza, Y., and Gelman, A., (2013). Deep interactions with MRP: Election turnout and voting patterns among small electoral subgroups. {\em American Journal of Political Science} {\bf 57}, 762--776.
 
 \bibitem Gigerenzer, G., Gaissmaier, W., Kurz-Milcke, E., Schwartz, L. M., and Woloshin, S.  (2007).  Helping doctors and patients make sense of health statistics.  {\em Psychological Science in the Public Interest} {\bf 8}, 53--96.
 
 \bibitem Guo, J., Riebler, A., and Rue, H. (2017).  Bayesian bivariate meta-analysis of diagnostic test studies with interpretable priors.  {\em Statistics in Medicine} {\bf 36}, 3039--3058.
+
+\bibitem Gustafson, P. (2003).  {\em Measurement Error and Misclassification in Statistics and Epidemiology: Impacts and Bayesian Adjustments}.  London:  CRC Press.
 
 \bibitem Hemenway, D. (1997).  The myth of millions of annual self-defense gun uses:  A case study of survey overestimates of rare events.  {\em Chance} {\bf 10} (3), 6--10.
 
@@ -243,12 +261,14 @@ Going forward, the analyses in this article suggest that future studies should b
 
 \bibitem Stringhini, S., Wisniak, A., Piumatti, G., Azman, A. S., Lauer, S. A., Baysson, H., De Ridder, D., Petrovic, D.,  Schrempft, S., Marcus, K., Yerly, S., Vernez, I. A., Keiser, O., Hurst, S., Posfay-Barbe, K. M., Trono, D., Pittet, D., Getaz, L., Chappuis, F., Eckerle, I., Vuilleumier, N., Meyer, B., Flahault, A., Kaiser, L., and Guessous, I. (2020).  Repeated seroprevalence of anti-SARS-CoV-2 IgG antibodies in a population-based sample.  \url{https://www.medrxiv.org/content/10.1101/2020.05.02.20088898v1.full.pdf}
 
+  \pagebreak
   \appendix
 
   \section{Stan programs}
 
   \subsection{Model with truncated normal priors on specificity and sensitivity}\label{stan1}
 
+  \vspace{-\baselineskip}
   \begin{small}
   \begin{quotation}\noindent
 \begin{verbatim}
@@ -261,9 +281,9 @@ data {
   real<lower=0> sigma_sens;
 }
 parameters {
-  real<lower = 0, upper = 1> p;
-  real<lower = 0, upper = 1> spec;
-  real<lower = 0, upper = 1> sens;
+  real<lower=0, upper=1> p;
+  real<lower=0, upper=1> spec;
+  real<lower=0, upper=1> sens;
 }
 model {
   real p_sample;
@@ -278,7 +298,8 @@ model {
 
   \subsection{Model with binomial data on specificity and sensitivity}\label{stan2}
 
-    \begin{small}
+  \vspace{-\baselineskip}
+  \begin{small}
   \begin{quotation}\noindent
 \begin{verbatim}
 data {
@@ -307,7 +328,8 @@ model {
 
 \subsection{Hierarchical model for specificities and sensitivities}\label{stan3}
 
-  \begin{small}
+\vspace{-\baselineskip}
+\begin{small}
   \begin{quotation}\noindent
 \begin{verbatim}
 data {
@@ -354,7 +376,8 @@ model {
 
 \subsection{Multilevel regression and poststratification}\label{stan4}
 
-  \begin{small}
+\vspace{-\baselineskip}
+\begin{small}
   \begin{quotation}\noindent
 \begin{verbatim}
 data {
@@ -416,7 +439,7 @@ model {
   a_eth ~ normal(0, sigma_eth);
   a_age ~ normal(0, sigma_age);
   a_zip ~ normal(0, sigma_zip);
-  b[1] + b[2]*mean(male) + b[3]*mean(x_zip) ~
+  b[1] + b[2]*mean(male) + b[3]*mean(x_zip[zip]) ~
     normal(intercept_prior_mean, intercept_prior_scale); // prior on centered intercept
   {b[2], sigma_eth, sigma_age, sigma_zip} ~ normal(0, coef_prior_scale);
   b[3] ~ normal(0, coef_prior_scale/sd(x_zip));   // prior on scaled coefficient
@@ -431,8 +454,8 @@ generated quantities {
       for (i_eth in 1:4){
         for (i_male in 0:1){
           count = count + 1;
-          p_pop[count] = inv_logit(b[1] + b[2]*(i_male - 0.5) + b[3]*x_zip[i_zip] +
-                                   a_eth[i_eth] + a_age[i_age] + a_zip[i_zip]);
+          p_pop[count] = inv_logit(b[1] + b[2]*i_male + b[3]*x_zip[i_zip] +
+                                   a_eth[i_eth] + a_age[i_age] + a_zip[i_zip]);      
         }
       }
     }
