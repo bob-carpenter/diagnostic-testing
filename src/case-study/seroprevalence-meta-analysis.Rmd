@@ -392,7 +392,7 @@ n^{\textrm{unk}}_k & \sim &
   + (1 - \pi) \cdot (1 - \textrm{logit}^{-1}(\theta_{0, k}))
 \right)
 \end{eqnarray*}
-Some care is required to avoid clasing $k$ subscripts in an impelementation.
+Some care is required to avoid clasing $k$ subscripts in an implementation.
 
 The posterior $p(\pi \mid n^{\textrm{pos}}, N^{\textrm{pos}},
 n^{\textrm{neg}}, N^{\textrm{neg}}, n^{\textrm{unk}},
