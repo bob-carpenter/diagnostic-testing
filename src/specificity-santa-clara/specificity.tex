@@ -98,7 +98,7 @@ In the example of Bendavid (2020a), prior information on specificity and sensiti
  \end{align*}
  Fitting this model given the data in that report ($y_{\gamma}/n_{\gamma}=399/401$ and $y_{\delta}/n_{\delta}=103/122$) yields a wide uncertainty for $p$.  Stan code is in Appendix \ref{stan2}.
 
- \begin{figure}
+\begin{figure}
 \centerline{ \includegraphics[width=.45\textwidth]{scatter.pdf} \includegraphics[width=.55\textwidth]{hist.pdf}}
 \caption{\em Summary of inference from model with unknown specificity, sensitivity, and prevalence, based on data from Bendavid et al.\ (2020a):  (a) scatterplot of posterior simulations of prevalence, $\pi$, and specificity, $\gamma$; (b) histogram of posterior simulations of $\gamma$.}
 \label{posterior1}
@@ -149,8 +149,61 @@ $\sigma_{\gamma}, \sigma_{\delta}\sim\mbox{normal}^+(0, 0.2)$.  To get a sense o
 
 Figure \ref{posterior2}b shows the results.  Our 95\% interval for $\pi$ is now $(0.003, 0.021)$, that is, the infection rate is estimated to be somewhere between 0.3\% and 2.1\%.
 
+\subsection{Prior sensitivity analysis}
 
- \section{Extensions of the model}
+To assess the sensitivity of the prevalence estimate to the priors
+placed on $\sigma_{\delta}$ and $\sigma_{\gamma}$, let
+$$
+\begin{array}{rcl}
+\sigma_{\delta} & \sim & \textrm{normal}(0, \tau_{\delta})
+\\
+\sigma_{\gamma} & \sim & \textrm{normal}(0, \tau_{\gamma})
+\end{array}
+$$
+where $\tau_{\delta} > 0$ and $\tau_{\gamma} > 0$ are fixed
+hyperparameters. Setting the hyperparameters $\tau_{\delta}$ and
+$\tau_{\gamma}$ to zero would force $\sigma_{\delta}$ and
+$\sigma_{\gamma}$ to be zero and would provide complete pooling,
+corresponding to the assumption that each test site has identical
+sensitivity and specificity. As the hyperparameters are increased, the
+scale of variation of $\sigma_{\delta}$ and $\sigma_{\gamma}$ are
+allowed to vary more. The combined effect is plotted in
+Figure~\ref{prior-sensitivity.fig}.
+%
+\begin{figure}
+\centerline{\includegraphics[width=\textwidth]{prior-sensitivity.pdf}}
+\caption{\em Each panel shows a plot of the median and central 90\%
+  posterior interval as a function of the sensitivity and
+  specificity hyperparameters.  The estimate of prevalence based on
+  the median is not sensitive to the hyperparameter values.  Small
+  values of these parameters force  pooling and reduce the posterior
+  interval for prevalence;  large values, particularly of the
+  sensitivity hyperprior, enlarge the posterior interval for
+  prevalence.  Uncertainty estimates are stable around weakly
+  informative hyperparameter values of 0.5.}\label{prior-sensitivity.fig}
+\end{figure}
+
+The conclusion of this analysis is that the estimate of prevalence
+based on the posterior median is not sensitive to the scales
+$\tau_{\delta}$ and $\tau_{\gamma}$ of the hyperpriors, but the
+uncertainty in that estimate as defined by the central posterior 90\%
+intervals are highly sensitive. As the hyperpriors constrain the
+hierarchical variation to be nearly zero, all values are pooled and
+uncertainty is artifically deflated. As the hyperpriors are increased
+the uncertainty in prevalence increases. This gets out of hand when
+the hyperprior for sensitivity is increased, because there are only
+three data points to inform the distribution it controls. This is
+another example of how informative wide hyperpriors on scales can
+be---they pull most of the probability mass into areas of wide
+variation and dominate the data, leading to inflated uncertainty.
+Around the middle of these ranges, with weakly informative hyperpriors
+with $\tau_{\delta} = \tau_{\gamma} = 0.5$, the posterior intervals
+are not as sensitive to variation in the hyperpriors. These values are
+only weakly informative in that they are consistent with inter-site
+variation in specificty in the range 73\% to 99.3\% and of specificity
+in the range 88\% to 99.75\%.
+
+\section{Extensions of the model}
 
 \subsection{Multilevel regression and poststratification to adjust for differences between sample and population}\label{mrp}
 
@@ -168,7 +221,7 @@ It is important to include the predictor $x^{\it zip}$, which in this example mi
 
 The above model is a start; it coud be improved by including interactions, following the general ideas of Ghitza and Gelman (2013).  In any case, once this model has been fit, it can be used to make inferences for disease prevalence for all cells in the population, and these cell estimates can then be summed, weighting by known population totals (in this case, the number of people in each sex $\times$ ethnicity $\times$ age $\times$ zip code category in the population) to get inferences for the prevalence in the county.  Here we are implicitly assuming that the data represent a random sample within poststratification cells.
 
-In addition, priors are needed for $\sigma_{\it eth}, \sigma_{\it age},\sigma_{\it zip}$, and $\beta$, along with the hierarchical specificity and sensitivity parameters from the earlier model.  
+In addition, priors are needed for $\sigma_{\it eth}, \sigma_{\it age},\sigma_{\it zip}$, and $\beta$, along with the hierarchical specificity and sensitivity parameters from the earlier model.
 
 We code the model in Stan; see Appendix \ref{stan4}.  Unfortunately the raw data from Bendavid et al.\  are not currently available, so we fit the model to simulated data to check the stability of the computation.  We use a $\mbox{normal}(0,2.5)$ prior for the centered intercept  $\beta_1 + \beta_2\overline{\it male} + \beta_3\overline{x}^{\it zip}$ (corresponding to an approximate 95\% prior interval of $(0.7\%, 99.3\%)$ for the probability that an average person in the sample has the antibody), a $\mbox{normal}(0,0.5)$ prior for $\beta_2$, and $\mbox{normal}^+(0, 0.5)$ priors for $\sigma_{\it eth}, \sigma_{\it age},\sigma_{\it zip}$.  These priors allow the prevalence to vary moderately by these poststratification variables.
 
@@ -236,7 +289,7 @@ Going forward, the analyses in this article suggest that future studies should b
 \bibitem Caughey, D., and Warshaw, C. (2019).  Public opinion in subnational politics.  {\em Journal of Politics} {\bf 81}, 352--363.
 
 \bibitem Fithian, W. (2020).  Statistical comment on the revision of Bendavid et al. \url{https://www.stat.berkeley.edu/~wfithian/overdispersionSimple.html}
-  
+
 \bibitem Gelman, A. (2020).  Simple Bayesian analysis inference of coronavirus infection rate from the Stanford study in Santa Clara county. {\em Statistical Modeling, Causal Inference, and Social Science}, 1 May.  \url{https://statmodeling.stat.columbia.edu/2020/05/01/simple-bayesian-analysis-inference-of-coronavirus-infection-rate-from-the-} \url{stanford-study-in-santa-clara-county}
 
   \bibitem Gelman, A., Chew, G., and Shnaidman, M. (2004).  Bayesian analysis of serial dilution assays. {\em Biometrics} {\bf 60}, 407--417.
@@ -455,7 +508,7 @@ generated quantities {
         for (i_male in 0:1){
           count = count + 1;
           p_pop[count] = inv_logit(b[1] + b[2]*i_male + b[3]*x_zip[i_zip] +
-                                   a_eth[i_eth] + a_age[i_age] + a_zip[i_zip]);      
+                                   a_eth[i_eth] + a_age[i_age] + a_zip[i_zip]);
         }
       }
     }

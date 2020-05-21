@@ -1,6 +1,9 @@
 library(rstan)
 library(ggplot2)
 
+ilogit <- function(v) 1 / (1 + exp(-v))
+logit <- function(u) log(u / (1 - u))
+
 sens_tests <- 3
 sens_vals <-
 c(78, 85,
@@ -39,7 +42,7 @@ unk_df <- data.frame(pos_tests = unk_mat[ , 1],
                      tests = unk_mat[ , 2],
                      sample_prev = unk_mat[ , 1] / unk_mat[ , 2])
 
-print("compiling model")
+print("translating and compiling meta.stan")
 model <- stan_model("meta.stan")
 
 data <-
@@ -63,48 +66,44 @@ init_fun <- function(chain_id = 1) {
        logit_spec_unk = array(rnorm(unk_tests, 3, 0.125)))
 }
 
-plot_df <- data.frame(sigma_sens = c(), sigma_spec = c(),
-                      prevalence = c(), quantile = c())
+ribbon_df <- data.frame(sigma_sens = c(), sigma_spec = c(),
+                        prev05 = c(), prev50 = c(), prev95 = c())
 
-sigma_senss <- c(0.1, 0.4, 0.7, 1.0)
-sigma_specs <- c(0.1, 0.3, 0.5, 0.7, 0.9)
-n_sigmas <- length(sigmas)
+sigma_senss <- c(0.01, 0.25, 0.5, 0.75, 1)
+sigma_specss <- c(0.01, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0)
 for (sigma_sens in sigma_senss) {
-  for (sigma_spec in sigma_specs) {
+  for (sigma_spec in sigma_specss) {
     print(c(sigma_sens, sigma_spec))
     data2 <- append(data, list(sigma_sigma_logit_sens = sigma_sens,
                                sigma_sigma_logit_spec = sigma_spec))
     fit <- sampling(model, data = data2, init = init_fun,
-                    iter = 10000, seed = 1234,
+                    iter = 2000, seed = 1234,
                     control = list(stepsize = 0.01, adapt_delta = 0.99),
                     open_progress = FALSE, refresh = 0)
     pis <- extract(fit)$pi
-    for (q in c(0.05, 0.50, 0.95)) {
-      plot_df <- rbind(plot_df, data.frame(sigma_sens = paste("sigma_sens", "=", sigma_sens),
-                                           sigma_spec = sigma_spec,
-                                           prevalence = quantile(pis, q),
-                                           quantile = paste(q, "%", sep = "")))
-    }
+    ribbon_df <- rbind(ribbon_df,
+                       data.frame(sigma_sens = paste("sensitivity hyperprior", "=", sigma_sens),
+                                  sigma_spec = sigma_spec,
+                                  prev05 = quantile(pis, 0.05),
+                                  prev50 = quantile(pis, 0.5),
+                                  prev95 = quantile(pis, 0.95)))
   }
 }
 
-ilogit <- function(v) 1 / (1 + exp(-v))
-logit <- function(u) log(u / (1 - u))
-brks <- c(1, 5, 9)
-labs <- c("0.1", "0.5", "0.9")
-
-plot <- ggplot(plot_df, aes(sigma_sens, sigma_spec, fill = prevalence)) +
-  facet_wrap(~ quantile, ncol = 3) +
-  coord_equal() +
-  geom_tile(color="white", size=0.1) + #  geom_raster() +
-  scale_x_continuous(expand = c(0, 0), breaks = brks, labels = labs) +
-  scale_y_continuous(expand = c(0, 0), breaks = brks, labels = labs) +
-  xlab("sigma_sigma_logit_sens") +
-  ylab("sigma_sigma_logit_spec") +
-  theme(axis.ticks = element_blank())
-
-plot2 <- ggplot(plot_df, aes(x = sigma_spec, y = prevalence, color = quantile)) +
+# ribbon version
+plot_ribbon <- ggplot(ribbon_df, aes(x = sigma_spec)) +
   facet_wrap(~ sigma_sens, nrow = 1) +
-  geom_line(aes(color = quantile)) +
-  scale_x_continuous(expand = c(0, 0), breaks = sigma_specs) +
-  scale_y_log10(expand = c(0, 0), lim = c(0.001, 0.3), breaks = c(0.001, 0.003, 0.01, 0.03, 0.1, 0.3))
+  geom_ribbon(aes(ymin = prev05, ymax = prev95), fill = "gray95") +
+  geom_line(aes(y = prev50), size = 0.5) +
+  geom_line(aes(y = prev05), color = "darkgray", size = 0.25) +
+  geom_line(aes(y = prev95), color = "darkgray", size = 0.25) +
+  scale_y_log10(limits = c(0.0009, 1.1), breaks = c(0.001, 0.01, 0.1, 1)) +
+  scale_x_continuous(expand = c(0, 0), lim = c(0, 1),
+                     breaks = c(0.1, 0.3, 0.5, 0.7, 0.9)) +
+  ylab("prevalence") +
+  xlab("specificity hyperprior") +
+  theme_bw() +
+  theme(panel.spacing = unit(0.25, "lines"),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        strip.background = element_blank())
