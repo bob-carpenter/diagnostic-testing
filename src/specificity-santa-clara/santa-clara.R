@@ -65,8 +65,8 @@ print(spin(draws_3a[,,"p"], lower=0, upper=1, conf=0.95))
 
 # Fit again with stronger priors
 
-santaclara_data$logit_spec_prior_scale <- 0.2
-santaclara_data$logit_sens_prior_scale <- 0.2
+santaclara_data$logit_spec_prior_scale <- 0.5
+santaclara_data$logit_sens_prior_scale <- 0.5
 fit_3b <- sc_model_hierarchical$sample(data=santaclara_data, refresh=0, cores=4, iter_warmup=1e4, iter_sampling=1e4)
 
 print(stanfit(fit_3b), digits=3)
