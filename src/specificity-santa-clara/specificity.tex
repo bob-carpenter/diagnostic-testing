@@ -90,11 +90,11 @@ First, suppose that estimates and uncertainties for sensitivity and specificity 
 Stan code is given in Appendix \ref{stan1}.
 For simplicity, we have specified independent normal prior distributions (with the constraint that both parameters are restricted to the unit interval), but it would be easy enough to use other distributions if prior information were available in that form.
 
-In the example of Bendavid (2020a), prior information on specificity and sensitivity was given in the form of previous trials, specifically $y_{\gamma}$ positive results in $n_{\gamma}$ tests of known negative subjects and $y_{\delta}$ positive results from $n_{\delta}$ tests of known positive subjects.  This yields the model
+In the example of Bendavid (2020a), prior information on specificity and sensitivity was given in the form of previous trials, specifically $y_{\gamma}$ negative results in $n_{\gamma}$ tests of known negative subjects and $y_{\delta}$ positive results from $n_{\delta}$ tests of known positive subjects.  This yields the model
   \begin{align*}
    y & \sim \mbox{Binomial} (n, p)\\
   p & = (1-\gamma)(1- \pi)+ \delta\pi\\
-   y_{\gamma} & \sim \mbox{Binomial} (n_{\gamma}, 1 - \gamma)\\
+   y_{\gamma} & \sim \mbox{Binomial} (n_{\gamma}, \gamma)\\
    y_{\delta} & \sim \mbox{Binomial} (n_{\delta}, \delta).
  \end{align*}
  Fitting this model given the data in that report ($y_{\gamma}/n_{\gamma}=399/401$ and $y_{\delta}/n_{\delta}=103/122$) yields a wide uncertainty for $p$.  Stan code is in Appendix~\ref{stan2}.
