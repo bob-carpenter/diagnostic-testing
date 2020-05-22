@@ -59,7 +59,8 @@ model {
   a_age ~ normal(0, sigma_age);
   a_zip ~ normal(0, sigma_zip);
   // prior on centered intercept
-  b[1] + b[2] * mean(male) + b[3] * mean(x_zip) ~ normal(intercept_prior_mean, intercept_prior_scale);
+  b[1] + b[2] * mean(male) + b[3] * mean(x_zip)
+      ~ normal(intercept_prior_mean, intercept_prior_scale);
   b[2]  ~ normal(0, coef_prior_scale);
   sigma_eth ~ normal(0, coef_prior_scale);
   sigma_age ~ normal(0, coef_prior_scale);
