@@ -61,11 +61,11 @@ model {
   // prior on centered intercept
   b[1] + b[2] * mean(male) + b[3] * mean(x_zip[zip])
       ~ normal(intercept_prior_mean, intercept_prior_scale);
-  b[2]  ~ normal(0, coef_prior_scale);
+  b[2] ~ normal(0, coef_prior_scale);
   sigma_eth ~ normal(0, coef_prior_scale);
   sigma_age ~ normal(0, coef_prior_scale);
   sigma_zip ~ normal(0, coef_prior_scale);
-  b[3] ~ normal(0, coef_prior_scale / sd(x_zip));  // prior on scaled coefficient
+  b[3] ~ normal(0, coef_prior_scale / sd(x_zip[zip]));  // prior on scaled coefficient
 }
 generated quantities {
   real p_avg;

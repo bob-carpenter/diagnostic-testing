@@ -80,8 +80,7 @@ print(stanfit(fit_3b), pars=c("p", "spec[1]", "sens[1]", "mu_logit_spec", "mu_lo
 
 ## MRP model, and allowing prevalence to vary by sex, ethnicity, age category, and zip code.  Model is set up to use the ethnicity, age, and zip categories of Bendavid et al. (2020).
 
-sc_model_hierarchical_mrp <- cmdstan_model("santa-clara-hierarchical-mrp.stan
-")
+sc_model_hierarchical_mrp <- cmdstan_model("santa-clara-hierarchical-mrp.stan")
 
 # To fit the model, we need individual-level data.  These data are not publcly available, so just to get the program running, we take the existing 50 positive tests and assign them at random to the 3330 people.
 N <- 3330
@@ -92,30 +91,31 @@ n <- rep(1, 3330)
 male <- sample(rep(c(0,1), c(2101, 1229)))
 eth <- sample(rep(1:4, c(2118, 623, 266, 306+17)))
 age <- sample(rep(1:4, c(71, 550, 2542, 167)))
-zip <- sample(1:58, 3330, replace=TRUE)
+N_zip <- 58
+zip <- sample(1:N_zip, 3330, replace=TRUE)
 
 # Setting up the zip code level predictor.  In this case we will use a random number.  In real life we might use %Latino or average income in the zip code
-x_zip <- rnorm(58)
+x_zip <- rnorm(N_zip)
 
 # Setting up the poststratification table.  For simplicity we assume there are 1000 people in each cell in the county.  Actually we'd want data from the Census.
-J <- 2*4*4*58
+J <- 2*4*4*N_zip
 N_pop <- rep(NA, J)
-count = 0
-for (i_zip in 1:58){
+count = 1
+for (i_zip in 1:N_zip){
   for (i_age in 1:4){
     for (i_eth in 1:4){
       for (i_male in 0:1){
-        count = count + 1
         N_pop[count] <- 1000
+        count = count + 1
       }
     }
   }
 }
 
 # Put togther the data and fit the model
-santaclara_mrp_data <- list(N=N, y=y, male=male, eth=eth, age=age, zip=zip, N_zip=58, x_zip=x_zip,  J_spec=14, y_spec=c(0, 368, 30, 70, 1102, 300, 311, 500, 198, 99, 29, 146, 105, 50), n_spec=c(0, 371, 30, 70, 1102, 300, 311, 500, 200, 99, 31, 150, 108, 52), J_sens=4, y_sens=c(0, 78, 27, 25), n_sens=c(0, 85, 37, 35), logit_spec_prior_scale=0.2, logit_sens_prior_scale=0.2, intercept_prior_mean=0, intercept_prior_scale=2.5, coef_prior_scale=0.5, J=J, N_pop=N_pop)
+santaclara_mrp_data <- list(N=N, y=y, male=male, eth=eth, age=age, zip=zip, N_zip=N_zip, x_zip=x_zip,  J_spec=14, y_spec=c(0, 368, 30, 70, 1102, 300, 311, 500, 198, 99, 29, 146, 105, 50), n_spec=c(0, 371, 30, 70, 1102, 300, 311, 500, 200, 99, 31, 150, 108, 52), J_sens=4, y_sens=c(0, 78, 27, 25), n_sens=c(0, 85, 37, 35), logit_spec_prior_scale=0.2, logit_sens_prior_scale=0.2, intercept_prior_mean=0, intercept_prior_scale=2.5, coef_prior_scale=0.5, J=J, N_pop=N_pop)
 
-fit_4 <- sc_model_hierarchical_mrp$sample(data=santaclara_mrp_data, refresh=0, cores=4, iter_warmup=1e4, iter_sampling=1e4)
+fit_4 <- sc_model_hierarchical_mrp$sample(data=santaclara_mrp_data, refresh=0, cores=4)
 
 # Show inferences for some model parameters. along with p_avg, the population prevalence, also we look at the inferences for the first three poststratification cells just to see
 print(stanfit(fit_4), pars=c("p_avg", "b", "a_age", "a_eth", "sigma_eth", "sigma_age", "sigma_zip", "mu_logit_spec", "sigma_logit_spec",  "mu_logit_sens", "sigma_logit_sens", "p_pop[1]", "p_pop[2]", "p_pop[3]"), digits=3)
