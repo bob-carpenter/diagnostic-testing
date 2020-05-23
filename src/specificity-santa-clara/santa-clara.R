@@ -65,8 +65,8 @@ print(spin(draws_3a[,,"p"], lower=0, upper=1, conf=0.95))
 
 # Fit again with stronger priors
 
-santaclara_data$logit_spec_prior_scale <- 0.5
-santaclara_data$logit_sens_prior_scale <- 0.5
+santaclara_data$logit_spec_prior_scale <- 0.2
+santaclara_data$logit_sens_prior_scale <- 0.2
 fit_3b <- sc_model_hierarchical$sample(data=santaclara_data, refresh=0, cores=4, iter_warmup=1e4, iter_sampling=1e4)
 
 print(stanfit(fit_3b), digits=3)
@@ -77,7 +77,6 @@ print(spin(draws_3b[,,"p"], lower=0, upper=1, conf=0.95))
 
 print(stanfit(fit_3a), pars=c("p", "spec[1]", "sens[1]", "mu_logit_spec", "mu_logit_sens", "sigma_logit_spec", "sigma_logit_sens"), digits=3)
 print(stanfit(fit_3b), pars=c("p", "spec[1]", "sens[1]", "mu_logit_spec", "mu_logit_sens", "sigma_logit_spec", "sigma_logit_sens"), digits=3)
-
 
 ## MRP model, and allowing prevalence to vary by sex, ethnicity, age category, and zip code.  Model is set up to use the ethnicity, age, and zip categories of Bendavid et al. (2020).
 
@@ -90,7 +89,7 @@ y <- sample(rep(c(0, 1), c(3330 - 50, 50)))
 n <- rep(1, 3330)
 
 # Here are the counts of each sex, ethnicity, and age from Bendavid et al. (2020).  We don't have zip code distribution but we looked it up and there are 58 zip codes in Santa Clara County; for simplicity we asssume all zip codes are equally likely.  We then assign these traits to people at random.  This is wrong--actually, these variable are correlated in various ways--but, again,. now we have fake data we can use to fit the model.
-male <- sample(rep(c(-0.5, 0.5), c(2101, 1229)))
+male <- sample(rep(c(0,1), c(2101, 1229)))
 eth <- sample(rep(1:4, c(2118, 623, 266, 306+17)))
 age <- sample(rep(1:4, c(71, 550, 2542, 167)))
 zip <- sample(1:58, 3330, replace=TRUE)

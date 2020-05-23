@@ -1,7 +1,7 @@
 data {
   int<lower = 0> N;  // number of tests in the sample (3330 for Santa Clara)
   int<lower = 0, upper = 1> y[N];  // 1 if positive, 0 if negative
-  vector<lower = -0.5, upper = 0.5>[N] male;  // -0.5 if female, 0.5 if male
+  vector<lower = 0, upper = 1>[N] male;  // 0 if female, 1 if male
   int<lower = 1, upper = 4> eth[N];  // 1=white, 2=asian, 3=hispanic, 4=other
   int<lower = 1, upper = 4> age[N];  // 1=0-4, 2=5-18, 3=19-64, 4=65+
   int<lower = 0> N_zip;  // number of zip codes (58 in this case)
@@ -59,7 +59,7 @@ model {
   a_age ~ normal(0, sigma_age);
   a_zip ~ normal(0, sigma_zip);
   // prior on centered intercept
-  b[1] + b[2] * mean(male) + b[3] * mean(x_zip)
+  b[1] + b[2] * mean(male) + b[3] * mean(x_zip[zip])
       ~ normal(intercept_prior_mean, intercept_prior_scale);
   b[2]  ~ normal(0, coef_prior_scale);
   sigma_eth ~ normal(0, coef_prior_scale);
@@ -75,9 +75,9 @@ generated quantities {
   for (i_zip in 1:N_zip) {
     for (i_age in 1:4) {
       for (i_eth in 1:4) {
-        for (x_male in { -0.5, 0.5 }) {
+        for (i_male in 0:1) {
           p_pop[count] = inv_logit(b[1]
-                                   + b[2] * x_male
+                                   + b[2] * i_male
                                    + b[3] * x_zip[i_zip]
                                    + a_eth[i_eth]
                                    + a_age[i_age]
