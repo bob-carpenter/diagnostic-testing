@@ -1,16 +1,13 @@
 data {
   int<lower = 0> y_sample;
   int<lower = 0> n_sample;
-
   int<lower = 0> y_spec;
   int<lower = 0> n_spec;
-
   int<lower = 0> y_sens;
   int<lower = 0> n_sens;
 }
 parameters {
   real<lower=0, upper = 1> p;
-
   real<lower=0, upper = 1> spec;
   real<lower=0, upper = 1> sens;
 }
