@@ -32,4 +32,6 @@ model {
   logit_sens ~ normal(mu_logit_sens, sigma_logit_sens);
   sigma_logit_spec ~ normal(0, logit_spec_prior_scale);
   sigma_logit_sens ~ normal(0, logit_sens_prior_scale);
+  mu_logit_spec ~ normal(4, 2);  // weak prior on mean of distribution of spec
+  mu_logit_sens ~ normal(4, 2);  // weak prior on mean of distribution of sens
 }

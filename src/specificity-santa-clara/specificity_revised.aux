@@ -6,12 +6,12 @@
 \newlabel{normals}{{2}{2}}
 \@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces \em  Summary of inference from model with unknown specificity, sensitivity, and prevalence, based on data from Bendavid et al.\ (2020a): (a) scatterplot of posterior simulations of prevalence, $\pi $, and specificity, $\gamma $; (b) histogram of posterior simulations of $\gamma $. This model assumes the testing sites are identical and thus pools all data.}}{3}}
 \newlabel{posterior1}{{1}{3}}
-\@writefile{toc}{\contentsline {section}{\numberline {3}Hierarchical model for varying testing conditions}{3}}
-\newlabel{model2}{{3}{3}}
 \@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces \em  Summary of inferences for the prevalence, specificity, and sensitivity of the Bendavid et al.\ (2020b) experiment, along with inferences for the hyperparameters characterizing the distribution of specificity and sensitivity on the logistic scale. (a) For the model with weak priors for $\sigma _{\gamma }$ and $\sigma _{\delta }$, the posterior inference for the prevalence, $\pi $, is highly uncertain. This is driven by the wide uncertainty for the sensitivity, which is driven by the large uncertainty in the hyperparameters for the sensitivity distribution. (b) Stronger priors on $\sigma _{\gamma }$ and $\sigma _{\delta }$ have the effect of regularizing the specificity and sensitivity parameters, leading to narrower intervals for $\pi $, the parameter of interest in this study. The hyperparameters $\mu $ and $\sigma $ are on the log odds scale and thus are difficult to interpret without transformation.}}{4}}
 \newlabel{posterior2}{{2}{4}}
+\@writefile{toc}{\contentsline {section}{\numberline {3}Hierarchical model for varying testing conditions}{4}}
+\newlabel{model2}{{3}{4}}
 \@writefile{toc}{\contentsline {section}{\numberline {4}Prior sensitivity analysis}{5}}
-\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces \em  Each panel shows a plot of the posterior median and central 90\% posterior interval of the prevalence, $\pi $, as a function of $\tau _{\gamma }$ and $\tau _{\delta }$, the prior scales for the specificity and sensitivity hyperparameters, $\sigma _{\gamma }$ and $\sigma _{\delta }$. The posterior median of prevalence is not sensitive to $\tau _{\gamma }$ and $\tau _{\delta }$, but the endpoints of the 90\% interval show some sensitivity. It is possible to use a weak hyperprior on the scale of the specificity distribution, $\sigma _{\gamma }$: this makes sense given that there are 13 prior specificity studies in the data. For the scale of the specificity distribution, $\sigma _{\delta }$, it is necessary to use a prior scale of 0.5 or less to effectively rule out the possibility of extremely high prevalence corresponding to an unrealistically sensitivity parameter $\gamma $.}}{6}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces \em  Each panel shows a plot of the posterior median and central 90\% posterior interval of the prevalence, $\pi $, as a function of $\tau _{\gamma }$ and $\tau _{\delta }$, the prior scales for the specificity and sensitivity hyperparameters, $\sigma _{\gamma }$ and $\sigma _{\delta }$. The posterior median of prevalence is not sensitive to $\tau _{\gamma }$ and $\tau _{\delta }$, but the endpoints of the 90\% interval show some sensitivity. It is possible to use a weak hyperprior on the scale of the specificity distribution, $\sigma _{\gamma }$: this makes sense given that there are 13 prior specificity studies in the data. For the scale of the sensitivity distribution, $\sigma _{\delta }$, it is necessary to use a prior scale of 0.5 or less to effectively rule out the possibility of extremely high prevalence corresponding to an unrealistically sensitivity parameter $\gamma $.}}{6}}
 \newlabel{prior-sensitivity.fig}{{3}{6}}
 \@writefile{toc}{\contentsline {section}{\numberline {5}Extensions of the model}{7}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {5.1}Multilevel regression and poststratification (MRP) to adjust for differences between sample and population}{7}}
@@ -24,13 +24,11 @@
 \newlabel{nonbayes}{{6}{8}}
 \@writefile{toc}{\contentsline {section}{\numberline {7}Discussion}{9}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {7.1}Limitations of the statistical analysis}{9}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {7.2}Santa Clara study}{9}}
-\@writefile{toc}{\contentsline {section}{\numberline {A}Stan programs}{12}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {A.1}Model with truncated normal priors on specificity and sensitivity}{12}}
-\newlabel{stan1}{{A.1}{12}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {A.2}Model with binomial data on specificity and sensitivity}{12}}
-\newlabel{stan2}{{A.2}{12}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {A.3}Hierarchical model for specificities and sensitivities}{12}}
-\newlabel{stan3}{{A.3}{12}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {A.4}Multilevel regression and poststratification}{13}}
-\newlabel{stan4}{{A.4}{13}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.2}Santa Clara study}{10}}
+\@writefile{toc}{\contentsline {section}{\numberline {A}Stan programs}{13}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.1}Model with binomial data on specificity and sensitivity}{13}}
+\newlabel{stan2}{{A.1}{13}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.2}Hierarchical model for specificities and sensitivities}{13}}
+\newlabel{stan3}{{A.2}{13}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.3}Multilevel regression and poststratification}{14}}
+\newlabel{stan4}{{A.3}{14}}
