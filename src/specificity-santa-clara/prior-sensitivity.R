@@ -1,8 +1,6 @@
-library(rstan)
-library(ggplot2)
-
-ilogit <- function(v) 1 / (1 + exp(-v))
-logit <- function(u) log(u / (1 - u))
+library("rstan")
+library("ggplot2")
+library("cmdstanr")
 
 sens_tests <- 3
 sens_vals <-
@@ -43,7 +41,7 @@ unk_df <- data.frame(pos_tests = unk_mat[ , 1],
                      sample_prev = unk_mat[ , 1] / unk_mat[ , 2])
 
 print("translating and compiling meta.stan")
-model <- stan_model("prior-sensitivity.stan")
+model <- cmdstan_model("prior-sensitivity.stan")
 
 data <-
 list(K_pos = sens_tests,
@@ -56,16 +54,6 @@ list(K_pos = sens_tests,
      N_unk = array(unk_df$tests, dim = c(length(unk_df$tests))),
      n_unk = array(unk_df$pos_tests, dim = c(length(unk_df$tests))))
 
-init_fun <- function(chain_id = 1) {
-  list(pi = runif(1, 0.01, 0.02),
-       mu_logit_sens = rnorm(1, 3, 0.125), mu_logit_spec = rnorm(1, 3, 0.125),
-       sigma_logit_sens = runif(1, 0.4, 0.6), sigma_logit_spec = runif(1, 0.4, 0.6),
-       logit_sens = array(rnorm(sens_tests, 3, 0.125)),
-       logit_spec = array(rnorm(spec_tests, 3, 0.125)),
-       logit_sens_unk = array(rnorm(unk_tests, 3, 0.125)),
-       logit_spec_unk = array(rnorm(unk_tests, 3, 0.125)))
-}
-
 ribbon_df <- data.frame(sigma_sens = c(), sigma_spec = c(),
                         prev05 = c(), prev50 = c(), prev95 = c())
 
@@ -76,11 +64,10 @@ for (sigma_sens in sigma_senss) {
     print(c(sigma_sens, sigma_spec))
     data2 <- append(data, list(sigma_sigma_logit_sens = sigma_sens,
                                sigma_sigma_logit_spec = sigma_spec))
-    fit <- sampling(model, data = data2, init = init_fun,
-                    iter = 2000, seed = 1234,
-                    control = list(stepsize = 0.01, adapt_delta = 0.99),
-                    open_progress = FALSE, refresh = 0)
-    pis <- extract(fit)$pi
+    fit <-  model$sample(data = data2, 
+                    iter_warmup = 1000, iter_sampling = 1000, seed = 1234,
+                    refresh = 0)
+    pis <- as.vector(fit$draws()[,,"pi"])
     ribbon_df <- rbind(ribbon_df,
                        data.frame(sigma_sens = paste("sensitivity hyperprior", "=", sigma_sens),
                                   sigma_spec = sigma_spec,

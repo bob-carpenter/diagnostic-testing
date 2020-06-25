@@ -38,12 +38,12 @@ transformed parameters {
   vector[K_unk] spec_unk = inv_logit(logit_spec_unk);
 }
 model {
-  // mu_logit_sens ~ normal(4, 2);  // remove following Gelman's model
+  mu_logit_sens ~ normal(4, 2);
   sigma_logit_sens ~ normal(0, sigma_sigma_logit_sens);
   logit_sens ~ normal(mu_logit_sens, sigma_logit_sens);
   n_pos ~ binomial_logit(N_pos, logit_sens);
 
-  // mu_logit_spec ~ normal(4, 2);  // remove following Gelman's model
+  mu_logit_spec ~ normal(4, 2);
   sigma_logit_spec ~ normal(0, sigma_sigma_logit_spec);
   logit_spec ~ normal(mu_logit_spec, sigma_logit_spec);
   n_neg ~ binomial_logit(N_neg, logit_spec);
