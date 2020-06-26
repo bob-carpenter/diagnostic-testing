@@ -1,4 +1,3 @@
-library("rstan")
 library("ggplot2")
 library("cmdstanr")
 
@@ -65,7 +64,7 @@ for (sigma_sens in sigma_senss) {
     data2 <- append(data, list(sigma_sigma_logit_sens = sigma_sens,
                                sigma_sigma_logit_spec = sigma_spec))
     fit <-  model$sample(data = data2, 
-                    iter_warmup = 1000, iter_sampling = 1000, seed = 1234,
+                    iter_warmup = 1e4, iter_sampling = 1e4, seed = 1234,
                     refresh = 0)
     pis <- as.vector(fit$draws()[,,"pi"])
     ribbon_df <- rbind(ribbon_df,
@@ -94,3 +93,5 @@ plot_ribbon <- ggplot(ribbon_df, aes(x = sigma_spec)) +
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
         strip.background = element_blank())
+
+ggsave(filename.type)
