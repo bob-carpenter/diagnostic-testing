@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.16 (TeX Live 2015) (preloaded format=pdflatex 2015.5.24)  25 JUN 2020 01:32
+This is pdfTeX, Version 3.14159265-2.6-1.40.16 (TeX Live 2015) (preloaded format=pdflatex 2015.5.24)  28 JUN 2020 01:18
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -871,15 +871,15 @@ File: hist.pdf Graphic file (type pdf)
  <use hist.pdf>
 Package pdftex.def Info: hist.pdf used on input line 102.
 (pdftex.def)             Requested size: 258.36667pt x 164.42001pt.
- [3 <./scatter.pdf> <./hist.pdf>] [4] <prior-sensitivity.pdf, id=48, 650.43pt x
- 175.65625pt>
-File: prior-sensitivity.pdf Graphic file (type pdf)
+ [3 <./scatter.pdf> <./hist.pdf>] [4] <prior-sensitivity-2.pdf, id=48, 650.43pt
+ x 180.675pt>
+File: prior-sensitivity-2.pdf Graphic file (type pdf)
 
-<use prior-sensitivity.pdf>
-Package pdftex.def Info: prior-sensitivity.pdf used on input line 174.
-(pdftex.def)             Requested size: 469.75499pt x 126.8664pt.
- [5] [6 <./prior-sensitivity.pdf>] [7] [8] [9]
-[10]
+<use prior-sensitivity-2.pdf>
+Package pdftex.def Info: prior-sensitivity-2.pdf used on input line 174.
+(pdftex.def)             Requested size: 469.75499pt x 130.49115pt.
+ [5] [6 <./prior-sensitivity-2.pdf>] [7] [8]
+[9] [10]
 Underfull \hbox (badness 2961) in paragraph at lines 298--299
 [] \OT1/cmr/m/n/10.95 Gel-man, A. (2020). Sim-ple Bayesian anal-y-sis in-fer-en
 ce of coro-n-avirus in-fec-tion rate
@@ -911,7 +911,7 @@ File: santa-clara-hierarchical-mrp.stan  (verbatim)
  [14] [15] (./specificity_revised.aux) ) 
 Here is how much of TeX's memory you used:
  13600 strings out of 493089
- 264210 string characters out of 6134842
+ 264220 string characters out of 6134842
  314637 words of memory out of 5000000
  16764 multiletter control sequences out of 15000+600000
  18019 words of font info for 69 fonts, out of 8000000 for 9000
@@ -936,7 +936,7 @@ s/cm/cmti10.pfb></usr/local/texlive/2015/texmf-dist/fonts/type1/public/amsfonts
 /cm/cmti8.pfb></usr/local/texlive/2015/texmf-dist/fonts/type1/public/amsfonts/c
 m/cmtt10.pfb></usr/local/texlive/2015/texmf-dist/fonts/type1/public/amsfonts/cm
 /cmtt9.pfb>
-Output written on specificity_revised.pdf (15 pages, 488860 bytes).
+Output written on specificity_revised.pdf (15 pages, 488867 bytes).
 PDF statistics:
  149 PDF objects out of 1000 (max. 8388607)
  106 compressed objects within 2 object streams

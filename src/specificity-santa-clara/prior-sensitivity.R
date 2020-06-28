@@ -64,8 +64,8 @@ for (sigma_sens in sigma_senss) {
     data2 <- append(data, list(sigma_sigma_logit_sens = sigma_sens,
                                sigma_sigma_logit_spec = sigma_spec))
     fit <-  model$sample(data = data2, 
-                    iter_warmup = 1e4, iter_sampling = 1e4, seed = 1234,
-                    refresh = 0)
+                    iter_warmup = 5e4, iter_sampling = 5e4, seed = 1234, parallel_chains=4,
+                    refresh = 0, adapt_delta=0.9)
     pis <- as.vector(fit$draws()[,,"pi"])
     ribbon_df <- rbind(ribbon_df,
                        data.frame(sigma_sens = paste("sensitivity hyperprior", "=", sigma_sens),
@@ -94,4 +94,6 @@ plot_ribbon <- ggplot(ribbon_df, aes(x = sigma_spec)) +
         panel.grid.minor = element_blank(),
         strip.background = element_blank())
 
-ggsave(filename.type)
+pdf("prior-sensitivity-2.pdf", width=9, height=2.5)
+plot_ribbon
+dev.off()
