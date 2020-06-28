@@ -47,7 +47,7 @@
 Political Science, Columbia University, New York.}  \ and Bob Carpenter\footnote{Center for Computational Mathematics, Flatiron Institute, New York.}
 \vspace{.1in}}
 
-\date{25 June 2020}
+\date{28 June 2020}
 
 \begin{document}\sloppy
 \maketitle
@@ -122,34 +122,34 @@ One could also consider alternatives to the logistic transform, which allows the
 \begin{figure}
  \begin{small}
   \centerline{
-    \begin{tabular}{l ccc c ccc}
-      & \multicolumn{3}{c}{(a) Posterior quantiles} && \multicolumn{3}{c}{(b) Posterior quantiles} \\
-      & \multicolumn{3}{c}{with weak prior} && \multicolumn{3}{c}{with stronger prior} \\
-     Parameter & 2.5\% & median & 97.5\% && 2.5\% & median & 97.5\% \\\hline
-     Prevalence, $\pi$ & 0.003 & 0.017 & 0.354 && 0.003 & 0.012 & 0.021 \\
-     Specificity, $\gamma_1$ & 0.986 & 0.998 & 1.000 && 0.988 & 0.995 & 0.998 \\
-     Sensitivity, $\delta_1$ & 0.031 & 0.757 & 0.973 && 0.642 & 0.818 & 0.910 \\
-     $\mu_{\gamma}$ & 4.63 & 5.69 & 7.20 && 4.71 & 5.26 & 5.87 \\
-     $\mu_{\delta}$ & $\!\!\!\!\!-0.55$ & 1.36 & 2.64 && 0.94 & 1.51 & 2.06 \\
-     $\sigma_{\gamma}$ & 0.89 & 1.66 & 2.78 && 0.04 & 0.42 & 0.77 \\
-     $\sigma_{\delta}$ & 0.22 & 0.90 & 2.32 && 0.02 & 0.26 & 0.57
+    \begin{tabular}{l cc c cc}
+      & \multicolumn{2}{c}{(a) Posterior inference} && \multicolumn{2}{c}{(b) Posterior inference} \\
+      & \multicolumn{2}{c}{with weak prior} && \multicolumn{2}{c}{with stronger prior} \\
+     Parameter & median & (95\% interval) && median & (95\% interval) \\\hline
+     Prevalence, $\pi$ &  0.016 & (0.00, 0.07)  && 0.012 & (0..003, 0.020) \\
+     Specificity, $\gamma_1$ & 0.997 & (0.987, 1.000)  && 0.995 &  (0.989, 0.999) \\
+     Sensitivity, $\delta_1$ & 0.801 & (0.145, 1.000) && 0.825 & (0.681, 0.926) \\
+     $\mu_{\gamma}$ & 5.53 & (4.50, 6.78) && 5.23 & (4.67, 5.81) \\
+     $\mu_{\delta}$ & 1.58 & (0.32, 2.94) && 1.56 & (1.00, 2.12) \\
+     $\sigma_{\gamma}$ & 1.60 & (0.79, 2.58) && 0.42 & (0.00, 0.71) \\
+     $\sigma_{\delta}$ &  0.86 & (0.13, 1.97) && 0.26 & (0.00, 0.51)
   \end{tabular}
 }
 \end{small}
-  \caption{\em Summary of inferences for the prevalence, specificity, and sensitivity of the Bendavid et al.\ (2020b) experiment, along with inferences for the hyperparameters characterizing the distribution of specificity and sensitivity on the logistic scale.  (a) For the model with weak priors for $\sigma_{\gamma}$ and $\sigma_{\delta}$, the posterior inference for the prevalence, $\pi$, is highly uncertain.  This is driven by the wide uncertainty for the sensitivity, which is driven by the large uncertainty in the hyperparameters for the sensitivity distribution. (b) Stronger priors on  $\sigma_{\gamma}$ and $\sigma_{\delta}$ have the effect of regularizing the specificity and sensitivity parameters, leading to narrower intervals for $\pi$, the parameter of interest in this study.  The hyperparameters $\mu$ and $\sigma$ are on the log odds scale and thus are difficult to interpret without transformation.}
+  \caption{\em Summary of inferences for the prevalence, specificity, and sensitivity of the Bendavid et al.\ (2020b) experiment, along with inferences for the hyperparameters (median and shortest 95\% posterior interval) characterizing the distribution of specificity and sensitivity on the logistic scale.  (a) For the model with weak priors for $\sigma_{\gamma}$ and $\sigma_{\delta}$, the posterior inference for the prevalence, $\pi$, is highly uncertain.  This is driven by the wide uncertainty for the sensitivity, which is driven by the large uncertainty in the hyperparameters for the sensitivity distribution. (b) Stronger priors on  $\sigma_{\gamma}$ and $\sigma_{\delta}$ have the effect of regularizing the specificity and sensitivity parameters, leading to narrower intervals for $\pi$, the parameter of interest in this study.  The hyperparameters $\mu$ and $\sigma$ are on the log odds scale and thus are difficult to interpret without transformation.}
 \label{posterior2}
 \end{figure}
 
 We  fit the above hierarchical model to the data from Bendavid et al.\ (2020b), assigning weak $\mbox{normal}^+(0,1)$ priors to $\sigma_{\gamma},\sigma_{\delta}$ (using the notation $\mbox{normal}^+$ for the truncated normal distribution constrained to be positive).  We often use haf-normal or half-$t$ priors for variance parameters when we want to constrain them at the high end but allow them to be arbitrarily close to zero if the data support such inferences (Gelman, 2006).  Setting the scale of these half-normals to 1 makes the prior weak for this particular application, in the following sense:  A shift of 1 on the logit scale represents a pretty big change in sensitivity or specificity.  For example, $\mbox{logit}(0.8)=1.4$, so if 0.8 is a typical value of sensitivity, and if $\sigma_{\delta}=1$, then we would expect sensitivities to vary from roughly 0.4 to 2.4 on the logit scale, which corresponds to a probability range from 0.60 to 0.92.  The $\mbox{normal}^+(0,1)$ weakly pull the specificities and sensitivities from different studies toward each other, while allowing for a large variation if required by the data.
 
-The resulting posterior inference is shown in Figure \ref{posterior2}a.  The 95\% posterior interval for the prevalence is now $(0.00, 0.35)$.  Where does that upper bound come from:  how could an underlying prevalence of 35\% be possible, given that only 1.5\% of the people in the sample tested positive?  The answer can be seen from the huge uncertainty in the sensitivity parameter, which in turn comes from the possibility that $\sigma_{\delta}$ is very large.  The trouble is that the sensitivity information in these data comes from only three experiments, which is not enough to get a good estimate of the underlying distribution.  This problem is discussed by Guo, Riebler, and Rue (2017).
+The resulting posterior inference is shown in Figure \ref{posterior2}a.  The 95\% posterior interval for the prevalence is now $(0.00, 0.07)$.  Where does that upper bound come from:  how could an underlying prevalence of 7\% be plausible, given that only 1.5\% of the people in the sample tested positive?  The answer can be seen from the large uncertainty in the sensitivity parameter, which in turn comes from the possibility that $\sigma_{\delta}$ is very large.  The trouble is that the sensitivity information in these data comes from only three experiments, which is not enough to get a good estimate of the underlying distribution.  This problem is discussed by Guo, Riebler, and Rue (2017).
 
 The only way to make progress here is to constrain the sensitivity parameters in some way.  One possible strong assumption is to assume that $\sigma_{\delta}$ is some small value.  This could make sense in the current context, as we can consider it as a relaxation of the assumption of Bendavid et al.\ (2020b) that $\sigma_{\delta} = 0$.  We also have reason to believe that specificity will not vary much between experiments, so we will apply a soft constraint to the variation in specificities as well.
 
 We replace the weakly informative $\mbox{normal}^+(0, 1)$ priors on $\sigma_{\gamma},\sigma_{\delta}$ with something stronger,
-$\sigma_{\gamma}, \sigma_{\delta}\sim\mbox{normal}^+(0, 0.2)$.  To get a sense of what this means, start with the point estimate from Figure \ref{posterior2}a of $\mu_{\delta}$, which is 1.36. Combining with this new prior implies a roughly 2/3 chance that the sensitivity of the assay in a new experiment is in the range $\mbox{logit}^{-1}(1.36 \pm 0.2)$, which is $(0.76, 0.83)$. This seems reasonable.
+$\sigma_{\gamma}, \sigma_{\delta}\sim\mbox{normal}^+(0, 0.2)$.  To get a sense of what this means, start with the point estimate from Figure \ref{posterior2}a of $\mu_{\delta}$, which is 1.58. Combining with this new prior implies a roughly 2/3 chance that the sensitivity of the assay in a new experiment is in the range $\mbox{logit}^{-1}(1.58 \pm 0.2)$, which is $(0.80, 0.836)$. This seems reasonable.
 
-Figure \ref{posterior2}b shows the results.  Our 95\% interval for $\pi$ is now $(0.003, 0.021)$; that is, the infection rate is estimated to be somewhere between 0.3\% and 2.1\%.
+Figure \ref{posterior2}b shows the results.  Our 95\% interval for $\pi$ is now $(0.003, 0.020)$; that is, the infection rate is estimated to be somewhere between 0.3\% and 2.0\%.
 
 \section{Prior sensitivity analysis}
 
@@ -179,11 +179,11 @@ For this problem, however, a weak prior does not work:  as shown in the left pan
   The posterior median of prevalence is not sensitive to $\tau_{\gamma}$ and $\tau_{\delta}$, but the endpoints of the 90\% interval show some sensitivity.  It is possible to use a weak hyperprior on the scale of the specificity distribution,  $\sigma_{\gamma}$:  this makes sense given that there are 13 prior specificity studies in the data.  For the scale of the sensitivity distribution,  $\sigma_{\delta}$, it is necessary to use a prior scale of 0.5 or less to effectively rule out the possibility of extremely high prevalence  corresponding to an unrealistic sensitivity parameter $\gamma$.  The noise in the rightmost graph represents Monte Carlo error that is a consequence of the weakly specified model.}\label{prior-sensitivity.fig}
 \end{figure}
 
-Figure~\ref{prior-sensitivity.fig} shows how these hyperprior parameters $\tau_{\gamma}$ and $\tau_{\delta}$ affect inferences for the prevalence, $\pi$.
+Figure~\ref{prior-sensitivity.fig} shows how these hyperprior parameters $\tau_{\gamma}$ and $\tau_{\delta}$ affect inferences for the prevalence, $\pi$.  
 The posterior median of $\pi$ is not sensitive to the scales
  $\tau_{\gamma}$ and $\tau_{\delta}$ of the hyperpriors, but the
 uncertainty in that estimate, as indicated by the central posterior 90\%
-intervals, is influenced by these settings.  In particular, in the graphs on the right, when the sensitivity hyperprior parameter $\tau_{\delta}$ is given a high value, the upper end of the interval is barely constrained.  The lower end of the interval is fairly stable, as long as the specificity hyperprior parameter $\tau_{\gamma}$ is not given an artificially low value.
+intervals, is influenced by these settings.  In particular, in the graphs on the right, when the sensitivity hyperprior parameter $\tau_{\delta}$ is given a high value, the upper end of the interval is barely constrained.  The lower end of the interval is fairly stable, as long as the specificity hyperprior parameter $\tau_{\gamma}$ is not given an artificially low value. Here we are using central rather than shortest posterior intervals because we are displaying inference on the log scale and so there is no boundary.
 
 When $\tau_{\gamma}$ and $\tau_{\delta}$ are too low, the variation in specificity and sensitivity are constrained to be nearly zero, all values are pooled, and
 uncertainty is artificially deflated. As the hyperprior parameters are increased,
