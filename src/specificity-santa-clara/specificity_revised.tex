@@ -41,13 +41,13 @@
 \makeatother
 
 
-\title{\bf Bayesian analysis of tests with unknown specificity and sensitivity\footnote{We thank Julien Riou, Will Fithian, Sander Greenland, Blake McShane, and Joseph Candelora, and several reviewers for helpful comments and the National Science Foundation, Office of Naval Research, National Institutes of Health, and Schmidt Foundation for financial support.  R and Stan code for the computations in this paper are at {\tt https://bob-carpenter.github.io/diagnostic-testing/}.}\vspace{.1in}}
+\title{\bf Bayesian analysis of tests with unknown specificity and sensitivity\footnote{We thank Julien Riou, Will Fithian, Sander Greenland, Blake McShane, Joseph Candelora, and several reviewers for helpful comments and the National Science Foundation, Office of Naval Research, National Institutes of Health, and Schmidt Foundation for financial support.  R and Stan code for the computations in this paper are at {\tt https://bob-carpenter.github.io/diagnostic-testing/}.}\vspace{.1in}}
 
 \author{Andrew Gelman\footnote{Department of Statistics and Department of
 Political Science, Columbia University, New York.}  \ and Bob Carpenter\footnote{Center for Computational Mathematics, Flatiron Institute, New York.}
 \vspace{.1in}}
 
-\date{28 June 2020}
+\date{29 June 2020}
 
 \begin{document}\sloppy
 \maketitle
@@ -87,7 +87,7 @@ First, suppose that priors for sensitivity and specificity have been externally 
 \nonumber  y & \sim \mbox{binomial} (n, p) \\
  p & = (1-\gamma)(1- \pi)+ \delta\pi , \label{normals} 
 \end{align}
-along with the specified prior distribution, $p(\gamma,\delta)$.  In this model, the parameters $\pi$, $\gamma$, and $\delta$ must be constrained to be between 0 and 1, and $\pi$ must be given a prior distribution too.  A natural starting point would be $\pi\sim \mbox{uniform}(0,1)$.  In this case, previously existing knowledge of the population prevalence was weak enough that the choice of prior for $\pi$ should not have much impact on the posterior.  The three parameters $\pi$, $\gamma$, and $\delta$ are not jointly identified from the data here, hence the need for an informative prior on $\gamma$ and $\delta$. This can be seen as a generalization of the usual approach of assuming fixed values for these parameters. 
+along with the specified prior distribution, $p(\gamma,\delta)$.  In this model, the parameters $\pi$, $\gamma$, and $\delta$ must be constrained to be between 0 and 1, and $\pi$ must be given a prior distribution too.  A natural starting point would be $\pi\sim \mbox{uniform}(0,1)$.  In this case, previously existing knowledge of the population prevalence was weak enough that the choice of prior for $\pi$ should not have much impact on the posterior.  The three parameters $\pi$, $\gamma$, and $\delta$, are not jointly identified from the data here, hence the need for an informative prior on $\gamma$ and $\delta$. This can be seen as a generalization of the usual approach of assuming that these parameters are known.
 
 In the example of Bendavid (2020a), prior information on specificity and sensitivity was given in the form of previous trials, specifically $y_{\gamma}$ negative results in $n_{\gamma}$ tests of known negative subjects and $y_{\delta}$ positive results from $n_{\delta}$ tests of known positive subjects.  This yields the model,
   \begin{align*}
@@ -96,7 +96,7 @@ In the example of Bendavid (2020a), prior information on specificity and sensiti
    y_{\gamma} & \sim \mbox{Binomial} (n_{\gamma}, \gamma)\\
    y_{\delta} & \sim \mbox{Binomial} (n_{\delta}, \delta).
  \end{align*}
- Fitting this model given the data in that report ($y_{\gamma}/n_{\gamma}=399/401$ and $y_{\delta}/n_{\delta}=103/122$) yields a wide uncertainty for $p$.  Stan code is in Appendix~\ref{stan2}; we have used the default $\mbox{uniform}(0,1)$ priors on $\pi$, $\gamma$, and $\delta$.
+ Fitting this model given the data in that report ($y_{\gamma}/n_{\gamma}=399/401$ and $y_{\delta}/n_{\delta}=103/122$) yields a wide uncertainty for $p$.  Stan code is in Appendix~\ref{stan2}; we have used $\mbox{uniform}(0,1)$ priors on $\pi$, $\gamma$, and $\delta$, with the understanding that they represent placeholders and could be augmented to include additional information.
 
 \begin{figure}
 \centerline{ \includegraphics[width=.45\textwidth]{scatter.pdf} \includegraphics[width=.55\textwidth]{hist.pdf}}
@@ -104,18 +104,19 @@ In the example of Bendavid (2020a), prior information on specificity and sensiti
 \label{posterior1}
 \end{figure}
 
-Figure \ref{posterior1}a shows the joint posterior simulations for $p$ and $\gamma$:  uncertainty in the population prevalence is in large part driven by uncertainty in the specificity.  Figure \ref{posterior1}b shows the posterior distribution for $\pi$, which reveals that the data and model are consistent with prevalences as low as 0 and as high as nearly 2\%.
+Figure \ref{posterior1}a shows the joint posterior simulations for $\pi$ and $\gamma$:  uncertainty in the population prevalence is in large part driven by uncertainty in the specificity.  Figure \ref{posterior1}b shows the posterior distribution for $\pi$, which reveals that the data and model are consistent with prevalences as low as 0 and as high as 2\%.
 
-The asymmetric posterior distribution with its hard bound at zero suggests that the usual central 95\% interval will not be a good inferential summary.  Instead we use highest posterior density or shortest posterior interval, for reasons discussed in Liu, Gelman, and Zheng (2015). The resulting 95\% interval for $\pi$ is (0, 1.8\%), which is much different from the intervals reported by Bendavid et al.\ (2020a,b), with or without their correction for nonrepresentativeness of the sample.  As a result, the substantive conclusion from that earlier report has been overturned. From the given data, the uncertainty in the specificity is large enough that the data do not supply strong evidence of a substantial prevalence.
+The asymmetric posterior distribution with its hard bound at zero suggests that the usual central 95\% interval will not be a good inferential summary.  Instead we the use highest posterior density or shortest posterior interval, for reasons discussed in Liu, Gelman, and Zheng (2015). The resulting 95\% interval for $\pi$ is (0, 1.8\%), which is much different from the intervals reported by Bendavid et al.\ (2020a,b), with or without their correction for nonrepresentativeness of the sample.  As a result, the substantive conclusion from that earlier report has been overturned. From the given data, the uncertainty in the specificity is large enough that the data do not supply strong evidence of a substantial prevalence.
 
 \section{Hierarchical model for varying testing conditions}\label{model2}
 The above analysis reveals that inference about specificity is key to precise estimation of low prevalence rates.  In the second version of their report, Bendavid et al.\ (2020b) include data from 13 specificity studies and 3 sensitivity studies.  Sensitivity and specificity can vary across experiments, so it is not appropriate to simply pool the data from these separate studies; indeed, these particular data are not consistent with constant error rates (Fithian, 2020). We allow the parameters to vary according to a hierarchical model where, for any study $j$, the specificity $\gamma_j$ and sensitivity $\delta_j$ are drawn from normal distributions on the logistic scale,
 \begin{align*}
   \mbox{logit}(\gamma_j) & \sim \mbox{normal}(\mu_{\gamma}, \sigma_{\gamma})\\
- \mbox{logit}(\delta_j) & \sim \mbox{normal}(\mu_{\delta}, \sigma_{\delta}).
+ \mbox{logit}(\delta_j) & \sim \mbox{normal}(\mu_{\delta}, \sigma_{\delta}),
 \end{align*}
+with the hyperparameters $\mu$ and $\sigma$ can be estimated from the data.
 Stan code is given in Appendix \ref{stan3}.
-This is different from model (\ref{normals}) in that, with data from multiple calibration studies, the hyperparameters $\mu$ and $\sigma$ can be estimated from the data.  In general it could make sense to allow correlation between $\gamma_j$ and $\delta_j$ (Guo, Riebler, and Rue, 2017), but the way the data are currently available to us, specificity and sensitivity are estimated from separate studies and so there is no information about such a correlation.  When coding the model, we use the convention that $j=1$ corresponds to the study of interest, with other $j > 1$ representing studies of specificity or sensitivity given known samples.  The parameters $\gamma_1$ and $\delta_1$ represent the specificity and sensitivity for the study of interest.
+In general it could make sense to allow correlation between $\gamma_j$ and $\delta_j$ (Guo, Riebler, and Rue, 2017), but the way the data are currently available to us, specificity and sensitivity are estimated from separate studies and so there is no information about such a correlation.  When coding the model, we use the convention that $j=1$ corresponds to the study of interest, with other $j > 1$ representing studies of specificity or sensitivity given known samples.  The parameters $\gamma_1$ and $\delta_1$ represent the specificity and sensitivity for the study of interest.
 
 One could also consider alternatives to the logistic transform, which allows the unbounded normal distribution to map to the unit interval but might not be appropriate for tests where the specificity can actually reach the value of 1.
 
@@ -126,7 +127,7 @@ One could also consider alternatives to the logistic transform, which allows the
       & \multicolumn{2}{c}{(a) Posterior inference} && \multicolumn{2}{c}{(b) Posterior inference} \\
       & \multicolumn{2}{c}{with weak prior} && \multicolumn{2}{c}{with stronger prior} \\
      Parameter & median & (95\% interval) && median & (95\% interval) \\\hline
-     Prevalence, $\pi$ &  0.016 & (0.00, 0.07)  && 0.012 & (0..003, 0.020) \\
+     Prevalence, $\pi$ &  0.016 & (0.00, 0.07)  && 0.012 & (0.003, 0.020) \\
      Specificity, $\gamma_1$ & 0.997 & (0.987, 1.000)  && 0.995 &  (0.989, 0.999) \\
      Sensitivity, $\delta_1$ & 0.801 & (0.145, 1.000) && 0.825 & (0.681, 0.926) \\
      $\mu_{\gamma}$ & 5.53 & (4.50, 6.78) && 5.23 & (4.67, 5.81) \\
@@ -140,14 +141,14 @@ One could also consider alternatives to the logistic transform, which allows the
 \label{posterior2}
 \end{figure}
 
-We  fit the above hierarchical model to the data from Bendavid et al.\ (2020b), assigning weak $\mbox{normal}^+(0,1)$ priors to $\sigma_{\gamma},\sigma_{\delta}$ (using the notation $\mbox{normal}^+$ for the truncated normal distribution constrained to be positive).  We often use haf-normal or half-$t$ priors for variance parameters when we want to constrain them at the high end but allow them to be arbitrarily close to zero if the data support such inferences (Gelman, 2006).  Setting the scale of these half-normals to 1 makes the prior weak for this particular application, in the following sense:  A shift of 1 on the logit scale represents a pretty big change in sensitivity or specificity.  For example, $\mbox{logit}(0.8)=1.4$, so if 0.8 is a typical value of sensitivity, and if $\sigma_{\delta}=1$, then we would expect sensitivities to vary from roughly 0.4 to 2.4 on the logit scale, which corresponds to a probability range from 0.60 to 0.92.  The $\mbox{normal}^+(0,1)$ weakly pull the specificities and sensitivities from different studies toward each other, while allowing for a large variation if required by the data.
+We  fit the above hierarchical model to the data from Bendavid et al.\ (2020b), assigning a uniform prior to $\pi$ and weak $\mbox{normal}^+(0,1)$ priors to $\sigma_{\gamma},\sigma_{\delta}$ (using the notation $\mbox{normal}^+$ for the truncated normal distribution constrained to be positive).  We often use haf-normal or half-$t$ priors for variance parameters when we want to constrain them at the high end but allow them to be arbitrarily close to zero if the data support such inferences (Gelman, 2006).  Setting the scale of these half-normals to 1 makes the prior weak for this particular application, in the following sense:  A shift of 1 on the logit scale represents a pretty big change in sensitivity or specificity.  For example, $\mbox{logit}(0.8)=1.4$, so if 0.8 is a typical value of sensitivity, and if $\sigma_{\delta}=1$, then we would expect sensitivities to vary from roughly 0.4 to 2.4 on the logit scale, which corresponds to a probability range from 0.60 to 0.92.  The $\mbox{normal}^+(0,1)$ priors weakly pull the specificities and sensitivities from different studies toward each other, while allowing for a large variation if required by the data.
 
 The resulting posterior inference is shown in Figure \ref{posterior2}a.  The 95\% posterior interval for the prevalence is now $(0.00, 0.07)$.  Where does that upper bound come from:  how could an underlying prevalence of 7\% be plausible, given that only 1.5\% of the people in the sample tested positive?  The answer can be seen from the large uncertainty in the sensitivity parameter, which in turn comes from the possibility that $\sigma_{\delta}$ is very large.  The trouble is that the sensitivity information in these data comes from only three experiments, which is not enough to get a good estimate of the underlying distribution.  This problem is discussed by Guo, Riebler, and Rue (2017).
 
 The only way to make progress here is to constrain the sensitivity parameters in some way.  One possible strong assumption is to assume that $\sigma_{\delta}$ is some small value.  This could make sense in the current context, as we can consider it as a relaxation of the assumption of Bendavid et al.\ (2020b) that $\sigma_{\delta} = 0$.  We also have reason to believe that specificity will not vary much between experiments, so we will apply a soft constraint to the variation in specificities as well.
 
-We replace the weakly informative $\mbox{normal}^+(0, 1)$ priors on $\sigma_{\gamma},\sigma_{\delta}$ with something stronger,
-$\sigma_{\gamma}, \sigma_{\delta}\sim\mbox{normal}^+(0, 0.2)$.  To get a sense of what this means, start with the point estimate from Figure \ref{posterior2}a of $\mu_{\delta}$, which is 1.58. Combining with this new prior implies a roughly 2/3 chance that the sensitivity of the assay in a new experiment is in the range $\mbox{logit}^{-1}(1.58 \pm 0.2)$, which is $(0.80, 0.836)$. This seems reasonable.
+Instead of specifying $\sigma_{\delta}$, we give it an informative prior distribution.  In particular, we replace the weakly informative $\mbox{normal}^+(0, 1)$ priors on $\sigma_{\gamma},\sigma_{\delta}$ with something stronger,
+$\sigma_{\gamma}, \sigma_{\delta}\sim\mbox{normal}^+(0, 0.2)$.  To get a sense of what this means, start with the point estimate from Figure \ref{posterior2}a of $\mu_{\delta}$, which is 1.58. Combining with this new prior implies a roughly 2/3 chance that the sensitivity of the assay in a new experiment is in the range $\mbox{logit}^{-1}(1.58 \pm 0.2)$, which is $(0.80, 0.86)$. This seems reasonable.
 
 Figure \ref{posterior2}b shows the results.  Our 95\% interval for $\pi$ is now $(0.003, 0.020)$; that is, the infection rate is estimated to be somewhere between 0.3\% and 2.0\%.
 
@@ -168,7 +169,7 @@ specificity  and sensitivity. As the hyperparameters are increased, the
 scales of variation of $\sigma_{\gamma}$ and $\sigma_{\delta}$ are
 allowed to vary more, and setting $\tau_{\gamma}$ and $\tau_{\delta}$ to infinity would typically be considered noninformative in the sense of providing the least amount of constraint on the sensitivities and specificities.  In practice, we often use $\mbox{normal}^+(0,1)$ priors for hierarchical scale parameters, on the default assumption that the underlying parameters (in this case, the specificities) will probably vary by less than 1 on the logit scale.
 
-For this problem, however, a weak prior does not work:  as shown in the left panel of Figure \ref{posterior2}, the resulting inferences for the sensitivities are ridiculously wide. No, we do not believe these tests could have specificities below 50\%, yet such a possibility is included in the posterior distribution, and this in turn propagates to inappropriately wide intervals for the prevalence, $\pi$.  As explained in the previous section, that is why we assigned a stronger prior, using hyperprior parameters $\tau_{\gamma}=\tau_{\delta}=0.2$.
+For this problem, however, a weak prior does not work:  as shown in the left panel of Figure \ref{posterior2}, the resulting inferences for the sensitivities are hopelessly wide. We do not believe these tests have specificities below 50\%, yet such a possibility is included in the posterior distribution, and this in turn propagates to inappropriately wide intervals for the prevalence, $\pi$.  As explained in the previous section, that is why we assigned a stronger prior, using hyperprior parameters $\tau_{\gamma}=\tau_{\delta}=0.2$.
 
 \begin{figure}
   \centerline{\includegraphics[width=\textwidth]{prior-sensitivity-2.pdf}}
@@ -198,11 +199,11 @@ variation in specificity in the range 73\% to 99.3\% and of specificity
 in the range 88\% to 99.75\%. 
 
 In addition we need priors on $\mu_{\gamma}$ and $\mu_{\delta}$.  In this particular example, once we have constrained the variation in the specificities and sensitivities, enough data are available to estimate these population means with uniform priors on these parameters, but in general it is best to use prior information to at least roughly constrain them.
-For this example, we assign independent $\mbox{normal}(4,2)$ priors, a distribution that puts 2/3 of its mass in the range $4\pm 2$, which, after undoing the logistic transformation, corresponds to $(0.881, 0.995)$ on the probability scale, which seem like a suitably broad range for the mean of the population distribution of specificity and sensitivity of these tests. 
+For this example, we assign independent $\mbox{normal}(4,2)$ priors, a distribution that puts 2/3 of its mass in the range $4\pm 2$, which, after undoing the logistic transformation, corresponds to $(0.881, 0.995)$ on the probability scale, which seem like a suitably broad range for the mean of the population distribution of specificity and sensitivity of these tests.
 
 The complexity of this sensitivity analysis might seem intimidating:  if Bayesian inference is this difficult and this dependent on priors, maybe it is not a good idea?
 
-We would argue that the problem is not as difficult as it might look.  The steps taken in Sections \ref{model1} and \ref{model2} show the basic workflow:  We start with a simple model, then add hierarchical structure.  For the hierarchical model we started with weak priors on the hyperparameters and examined the inferences, which made us realize that we had prior information (that specificities and sensitivities of the tests were not so variable) which we then incorporated into the next iteration of the model.  Performing the sensitivity analysis was fine---it helped us understand the inferences better---but it was not necessary for us to get reasonable inferences.
+We would argue that the problem is not as difficult as it might look.  The steps taken in Sections \ref{model1} and \ref{model2} show the basic workflow:  We start with a simple model, then add hierarchical structure.  For the hierarchical model we started with weak priors on the hyperparameters and examined the inferences, which made us realize that we had prior information (that specificities and sensitivities of the tests should not be zso variable) which we then incorporated into the next iteration of the model.  Performing the sensitivity analysis was fine---it helped us understand the inferences better---but it was not necessary for us to get reasonable inferences.
 
 Conversely, non-Bayesian analyses would not be immune from this sensitivity to model choices, as is illustrated by the mistakes made by Bendavid et al.\ (2020b) to treat specificity and sensitivity as not varying at all, to set $\sigma_{\gamma}=\sigma_{\delta}=0$ in our notation.  An alternative could be to use the calibration studies to get point estimates of $\sigma_{\gamma}$ and $\sigma_{\delta}$, but then there would still be the problem of accounting for uncertainty in these estimates, which would return the researchers to the need for some sort of external constraint or bound on the distribution of the sensitivity parameters $\delta_j$, given that only three calibration studies are available here to estimate these.  This in turn suggests the need for more data or modeling of the factors that influence the test's specificity and sensitivity.  In short, the analysis shown in Figure \ref{prior-sensitivity.fig} formalizes a dependence on prior information that would arise, explicitly or implicitly, in any reasonable analysis of these data.
 
