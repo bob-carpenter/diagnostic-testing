@@ -15,8 +15,6 @@ data {
   int<lower = 0> n_sens [J_sens];
   int<lower = 0> J;  // number of population cells, J = 2*4*4*58
   vector<lower = 0>[J] N_pop;  // population sizes for poststratification
-  real intercept_prior_mean;
-  real<lower = 0> intercept_prior_scale;
   real<lower = 0> coef_prior_scale;
   real<lower = 0> logit_spec_prior_scale;
   real<lower = 0> logit_sens_prior_scale;
@@ -61,13 +59,12 @@ model {
   a_age ~ normal(0, sigma_age);
   a_zip ~ normal(0, sigma_zip);
   // prior on centered intercept
-  b[1] + b[2] * mean(male) + b[3] * mean(x_zip[zip])
-      ~ normal(intercept_prior_mean, intercept_prior_scale);
+  b[1] + b[2] * mean(male) + b[3] * mean(x_zip[zip]) ~ logistic(0, 1);
   b[2] ~ normal(0, coef_prior_scale);
+  b[3] ~ normal(0, coef_prior_scale / sd(x_zip[zip]));  // prior on scaled coef
   sigma_eth ~ normal(0, coef_prior_scale);
   sigma_age ~ normal(0, coef_prior_scale);
   sigma_zip ~ normal(0, coef_prior_scale);
-  b[3] ~ normal(0, coef_prior_scale / sd(x_zip[zip]));  // prior on scaled coef
 }
 generated quantities {
   real p_avg;

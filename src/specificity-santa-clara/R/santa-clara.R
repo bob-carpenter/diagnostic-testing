@@ -19,7 +19,7 @@ spin <- function(x, lower=NULL, upper=NULL, conf=0.95){
 }
 
 ## Simple model fit using data from Bendavid et al. paper of 11 Apr 2020
-sc_model <- cmdstan_model("santa-clara.stan")
+sc_model <- cmdstan_model("stan/santa-clara.stan")
 
 fit_1 <- sc_model$sample(data = list(y_sample=50, n_sample=3330, y_spec=369+30, n_spec=371+30, y_sens=25+78, n_sens=37+85), refresh=0, parallel_chains=4, iter_warmup=1e4, iter_sampling=1e4)
 print(stanfit(fit_1), digits=3)
@@ -43,7 +43,7 @@ dev.off()
 # Use the shortest posterior interval, which makes more sense than a central interval because of the skewness of the posterior and the hard boundary at 0
 print(spin(draws_1[,,"p"], lower=0, upper=1, conf=0.95))
 
-# Simple model fit using data from Bendavid et al. paper of 27 Apr 2020
+# Simple model fit using pooled specificity and sensitivity data from Bendavid et al. paper of 27 Apr 2020
 
 fit_2 <- sc_model$sample(data = list(y_sample=50, n_sample=3330, y_spec=3308, n_spec=3324, y_sens=130, n_sens=157), refresh=0, parallel_chains=4, iter_warmup=1e4, iter_sampling=1e4)
 
@@ -53,7 +53,7 @@ print(spin(draws_2[,,"p"], lower=0, upper=1, conf=0.95))
 
 ## Hierarchical model allowing sensitivity and specificity to vary across studies, fit using data from Bendavid et al. paper of 27 Apr 2020
 
-sc_model_hierarchical <- cmdstan_model("santa-clara-hierarchical.stan")
+sc_model_hierarchical <- cmdstan_model("stan/santa-clara-hierarchical.stan")
 
 santaclara_data = list(y_sample=50, n_sample=3330, J_spec=14, y_spec=c(0, 368, 30, 70, 1102, 300, 311, 500, 198, 99, 29, 146, 105, 50), n_spec=c(0, 371, 30, 70, 1102, 300, 311, 500, 200, 99, 31, 150, 108, 52), J_sens=4, y_sens=c(0, 78, 27, 25), n_sens=c(0, 85, 37, 35), logit_spec_prior_scale=1, logit_sens_prior_scale=1)
 
@@ -65,8 +65,8 @@ print(spin(draws_3a[,,"p"], lower=0, upper=1, conf=0.95))
 
 # Fit again with stronger priors
 
-santaclara_data$logit_spec_prior_scale <- 0.2
-santaclara_data$logit_sens_prior_scale <- 0.2
+santaclara_data$logit_spec_prior_scale <- 0.3
+santaclara_data$logit_sens_prior_scale <- 0.3
 fit_3b <- sc_model_hierarchical$sample(data=santaclara_data, refresh=0, parallel_chains=4, iter_warmup=1e4, iter_sampling=1e4)
 
 print(stanfit(fit_3b), digits=3)
@@ -97,7 +97,7 @@ print(spin(draws_3b[,,"sigma_logit_sens"], conf=0.95))
 
 ## MRP model, and allowing prevalence to vary by sex, ethnicity, age category, and zip code.  Model is set up to use the ethnicity, age, and zip categories of Bendavid et al. (2020).
 
-sc_model_hierarchical_mrp <- cmdstan_model("santa-clara-hierarchical-mrp.stan")
+sc_model_hierarchical_mrp <- cmdstan_model("stan/santa-clara-hierarchical-mrp.stan")
 
 # To fit the model, we need individual-level data.  These data are not publcly available, so just to get the program running, we take the existing 50 positive tests and assign them at random to the 3330 people.
 N <- 3330
@@ -111,8 +111,8 @@ age <- sample(rep(1:4, c(71, 550, 2542, 167)))
 N_zip <- 58
 zip <- sample(1:N_zip, 3330, replace=TRUE)
 
-# Setting up the zip code level predictor.  In this case we will use a random number.  In real life we might use %Latino or average income in the zip code
-x_zip <- rnorm(N_zip)
+# Setting up the zip code level predictor.  In this case we will use a random number with mean 50 and standard deviation 20.  These are arbitrary numbers that we chose just to be able to test the centering and scaling in the model.   In real life we might use %Latino or average income in the zip code
+x_zip <- rnorm(N_zip, 50, 20)
 
 # Setting up the poststratification table.  For simplicity we assume there are 1000 people in each cell in the county.  Actually we'd want data from the Census.
 J <- 2*4*4*N_zip
@@ -130,11 +130,11 @@ for (i_zip in 1:N_zip){
 }
 
 # Put togther the data and fit the model
-santaclara_mrp_data <- list(N=N, y=y, male=male, eth=eth, age=age, zip=zip, N_zip=N_zip, x_zip=x_zip,  J_spec=14, y_spec=c(0, 368, 30, 70, 1102, 300, 311, 500, 198, 99, 29, 146, 105, 50), n_spec=c(0, 371, 30, 70, 1102, 300, 311, 500, 200, 99, 31, 150, 108, 52), J_sens=4, y_sens=c(0, 78, 27, 25), n_sens=c(0, 85, 37, 35), logit_spec_prior_scale=0.2, logit_sens_prior_scale=0.2, intercept_prior_mean=0, intercept_prior_scale=2.5, coef_prior_scale=0.5, J=J, N_pop=N_pop)
+santaclara_mrp_data <- list(N=N, y=y, male=male, eth=eth, age=age, zip=zip, N_zip=N_zip, x_zip=x_zip,  J_spec=14, y_spec=c(0, 368, 30, 70, 1102, 300, 311, 500, 198, 99, 29, 146, 105, 50), n_spec=c(0, 371, 30, 70, 1102, 300, 311, 500, 200, 99, 31, 150, 108, 52), J_sens=4, y_sens=c(0, 78, 27, 25), n_sens=c(0, 85, 37, 35), logit_spec_prior_scale=0.3, logit_sens_prior_scale=0.3, coef_prior_scale=0.5, J=J, N_pop=N_pop)
 
 fit_4 <- sc_model_hierarchical_mrp$sample(data=santaclara_mrp_data, refresh=0, parallel_chains=4)
 
-# Show inferences for some model parameters. along with p_avg, the population prevalence, also we look at the inferences for the first three poststratification cells just to see
+# Show inferences for some model parameters. along with p_avg, the population prevalence, also we look at the inferences for the first three poststratification cells just to check that everything makes sense
 print(stanfit(fit_4), pars=c("p_avg", "b", "a_age", "a_eth", "sigma_eth", "sigma_age", "sigma_zip", "mu_logit_spec", "sigma_logit_spec",  "mu_logit_sens", "sigma_logit_sens", "p_pop[1]", "p_pop[2]", "p_pop[3]"), digits=3)
 draws_4 <- fit_4$draws()
 print(spin(draws_4[,,"p_avg"], lower=0, upper=1, conf=0.95))
