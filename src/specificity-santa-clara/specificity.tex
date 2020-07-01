@@ -55,7 +55,7 @@
   Carpenter\footnote{Center for Computational Mathematics, Flatiron
     Institute, New York.}  \vspace{.1in}}
 
-\date{29 June 2020}
+\date{1 July 2020}
 
 \begin{document}\sloppy
 \maketitle
@@ -98,7 +98,7 @@ recruited 3330 residents of Santa Clara County, California and tested
 them for SARS-CoV-2 antibodies.  50 people tested positive, yielding a
 raw estimate of 1.5\%.  After adjusting for differences between sample
 and population in sex, ethnicity, and zip code distributions, Bendavid
-et al.\ (2020a) reported a 95\% confidence interval of of 2.5\% to 4.2\%,
+et al.\ (2020a) reported an uncertainty range of 2.5\% to 4.2\%,
 implying that the number of infections in the county was between 50
 and 85 times the count of cases reported at the time.  Using an
 estimate of the number of coronavirus deaths in the county up to that
@@ -196,8 +196,8 @@ this model, the parameters $\pi$, $\gamma$, and $\delta$ must be
 constrained to be between 0 and 1, and $\pi$ must be given a prior
 distribution too.  A natural starting point would be
 $\pi\sim \mbox{uniform}(0,1)$.  In this case, previously existing
-knowledge of the population prevalence was weak enough that the prior
-for $\pi$ should not be chosen so as to have much impact on the
+knowledge of the population prevalence was weak enough that a reasonable prior
+on $\pi$ should not have much impact on the
 posterior.  The three parameters $\pi$, $\gamma$, and $\delta$, are
 not jointly identified from only the number of positive test cases,
 hence the need for an informative prior on $\gamma$ and $\delta$. This
@@ -222,13 +222,13 @@ $\gamma$, and sensitivity $\delta$, with the understanding that they
 represent placeholders and could be augmented to include additional
 information.  Stan code is in Appendix~\ref{stan2}.
 
-Pooling the data in the report yields
+We fit the model using the data reported in Bendavid et al.\ (2020a):
 %
 \begin{equation*}
-  y_{\gamma}/n_{\gamma}=399/401 \qquad y_{\delta}/n_{\delta}=103/122.
+y/n=50/3330,\qquad  y_{\gamma}/n_{\gamma}=399/401, \qquad y_{\delta}/n_{\delta} =103/122.
 \end{equation*}
 %
-This results in high posterior uncertainty for $p$.   
+This results in high posterior uncertainty for the prevalence, $\pi$.   
 %
 \begin{figure}
   \centerline{ \includegraphics[width=.45\textwidth]{img/scatter.pdf}
@@ -243,7 +243,7 @@ This results in high posterior uncertainty for $p$.
 \end{figure}
 %
 Figure \ref{posterior1}a shows the joint posterior simulations for
-sensitivity $\pi$ and specificity $\gamma$: uncertainty in the
+$\pi$ and $\gamma$: uncertainty in the
 population prevalence is in large part driven by uncertainty in the
 specificity.  Figure \ref{posterior1}b shows the posterior
 distribution for $\pi$, which reveals that the data and model are
@@ -297,7 +297,7 @@ correlation.  When coding the model, we use the convention that $j=1$
 corresponds to the study of interest, with other $j > 1$ representing
 studies of specificity or sensitivity given known samples.  The
 parameters $\gamma_1$ and $\delta_1$ represent the specificity and
-sensitivity for the site performing the prevalence study (the 50/3300
+sensitivity for the site performing the prevalence study (the 50/3330
 positive tests of patients with unknown status).
 
 One could also consider alternatives to the logistic transform, which
@@ -308,36 +308,35 @@ actually reach the value of 1.
 \begin{figure}
  \begin{small}
   \centerline{
-    \begin{tabular}{l|cc|cc}
-      & \multicolumn{2}{l}{(a) \it Posterior inference} &
-                                                          \multicolumn{2}{|l}{(b) \it Posterior inference} \\
-      & \multicolumn{2}{l}{\it with weak prior} & \multicolumn{2}{|l}{\it with stronger prior} \\[6pt]
-     {\it Parameter} & median & (95\% interval) & median & (95\% interval) \\\hline
-     Prevalence, $\pi$ &  0.016 & (0.00, 0.07)  & 0.012 & (0.003, 0.020) \\
-     Specificity, $\gamma_1$ & 0.997 & (0.987, 1.000)  & 0.995 &  (0.989, 0.999) \\
-     Sensitivity, $\delta_1$ & 0.801 & (0.145, 1.000) & 0.825 &
-                                                                 (0.681, 0.926) \\ \hline
-     $\mu_{\gamma}$ & 5.53 & (4.50, 6.78) & 5.23 & (4.67, 5.81) \\
-     $\mu_{\delta}$ & 1.58 & (0.32, 2.94) & 1.56 & (1.00, 2.12) \\ \hline
-     $\sigma_{\gamma}$ & 1.60 & (0.79, 2.58) & 0.42 & (0.00, 0.71) \\
-     $\sigma_{\delta}$ &  0.86 & (0.13, 1.97) & 0.26 & (0.00, 0.51)
+    \begin{tabular}{lccccc}
+      & \multicolumn{2}{l}{(a) \it Posterior inference} &&
+                                                          \multicolumn{2}{l}{(b) \it Posterior inference} \\
+      & \multicolumn{2}{l}{\it with weak prior} && \multicolumn{2}{l}{\it with stronger prior} \\[6pt]
+     {\it Parameter} & median & (95\% interval) && median & (95\% interval) \\\hline
+     Prevalence, $\pi$ &  0.016 & (0.000, 0.160)  && 0.016 & (0.001, 0.021) \\
+     Specificity, $\gamma_1$ & 0.997 & (0.987, 1.000)  && 0.995 &  (0.987, 0.999) \\
+     Sensitivity, $\delta_1$ & 0.797 & (0.065, 1.000) && 0.821 & (0.622, 0.959) \\ \hline
+     $\mu_{\gamma}$ & 5.54 & (4.43, 6.72) && 5.234 & (4.60, 5.91) \\
+     $\mu_{\delta}$ & 1.54 & (0.24, 2.89) && 1.54 & (0.90, 2.22) \\ \hline
+     $\sigma_{\gamma}$ & 1.62 & (0.82, 2.61) && 0.72 & (0.26, 1.15) \\
+     $\sigma_{\delta}$ &  0.87 & (0.11, 2.16) && 0.39 & (0.00, 0.73)
   \end{tabular}
 }
 \end{small}
-\caption{\em Summary of inferences for the prevalence, specificity,
-  and sensitivity of the Bendavid et al.\ (2020b) experiment, along
-  with inferences for the hyperparameters (median and shortest 95\%
-  posterior interval) characterizing the distribution of specificity
+\caption{\em Summary of inferences (posterior median and shortest 95\%
+  posterior interval)  for the prevalence, specificity,
+  and sensitivity of the Bendavid et al.\ (2020b) study, along
+  with inferences for the hyperparameters characterizing the distribution of specificity
   and sensitivity on the logistic scale.  (a) For the model with weak
   priors for $\sigma_{\gamma}$ and $\sigma_{\delta}$, the posterior
   inference for the prevalence, $\pi$, is highly uncertain.  This is
-  driven by the wide uncertainty for the sensitivity, which is driven
-  by the large uncertainty in the hyperparameters for the sensitivity
+  driven by uncertainty in the sensitivity, which in turn is driven
+  by uncertainty in the hyperparameters for the sensitivity
   distribution. (b) Stronger priors on $\sigma_{\gamma}$ and
   $\sigma_{\delta}$ have the effect of regularizing the specificity
   and sensitivity parameters, leading to narrower intervals for $\pi$,
   the parameter of interest in this study.  The hyperparameters $\mu$
-  and $\sigma$ are on the log odds scale and thus are difficult to
+  and $\sigma$ are on the logistic scale and thus are difficult to
   interpret without transformation.}
 \label{posterior2}
 \end{figure}
@@ -346,7 +345,7 @@ We fit the above hierarchical model to the data from Bendavid et al.\
 (2020b), assigning a uniform prior to $\pi$ and weak
 $\mbox{normal}^+(0,1)$ priors to $\sigma_{\gamma},\sigma_{\delta}$
 (using the notation $\mbox{normal}^+$ for the truncated normal
-distribution constrained to be positive).  We often use haf-normal or
+distribution constrained to be positive).  We often use half-normal or
 half-$t$ priors for variance parameters when we want to constrain them
 at the high end but allow them to be arbitrarily close to zero if the
 data support such inferences (Gelman, 2006).  Setting the scale of
@@ -355,17 +354,17 @@ application, in the following sense. A shift of 1 on the logit scale
 represents a pretty big change in sensitivity or specificity.  For
 example, $\mbox{logit}(0.8)=1.4$, so if 0.8 is a typical value of
 sensitivity, and if $\sigma_{\delta}=1$, then we would expect
-sensitivities to vary from roughly plus or minus two standard
-deviations, or -0.6 to 3.4 on the logit scale,
-which corresponds to a probability range from 0.35 to 0.97.  The
+sensitivities to vary by roughly $\pm 1$ standard
+deviation, or 0.4 to 2.4 on the logit scale,
+which corresponds to a probability range from 0.60 to 0.92.  The
 $\mbox{normal}^+(0,1)$ hyperpriors weakly pull the specificities and
 sensitivities from different studies toward each other, while allowing
 for a large variation if required by the data.
 
 The resulting posterior inference is shown in Figure
 \ref{posterior2}a.  The 95\% posterior interval for the prevalence is
-now $(0.00, 0.07)$.  Where does that upper bound come from: how could
-an underlying prevalence of 7\% be plausible, given that only 1.5\% of
+now $(0.000, 0.160)$.  Where does that upper bound come from: how could
+an underlying prevalence of 16\% be plausible, given that only 1.5\% of
 the people in the sample tested positive?  The answer can be seen from
 the large uncertainty in the sensitivity parameter, which in turn
 comes from the possibility that $\sigma_{\delta}$ is very large.  The
@@ -387,17 +386,15 @@ Instead of specifying $\sigma_{\delta}$, we give it an informative
 prior distribution.  In particular, we replace the weakly informative
 $\mbox{normal}^+(0, 1)$ priors on $\sigma_{\gamma},\sigma_{\delta}$
 with something stronger,
-$\sigma_{\gamma}, \sigma_{\delta}\sim\mbox{normal}^+(0, 0.2)$.  To get
+$\sigma_{\gamma}, \sigma_{\delta}\sim\mbox{normal}^+(0, 0.3)$.  To get
 a sense of what this means, start with the point estimate from Figure
-\ref{posterior2}a of $\mu_{\delta}$, which is 1.58. Combining with
-this new prior implies a roughly 2/3 chance that the sensitivity of
-the assay in a new experiment is in the range
-$\mbox{logit}^{-1}(1.58 \pm 0.2)$, which is $(0.80, 0.86)$; the 95\%
-interval is $(0.76, 0.88)$. This seems reasonable.
+\ref{posterior2}a of $\mu_{\delta}$, which is 1.58. If $\sigma_{\delta}$ were 0.3, then there would be a roughly 2/3 chance that the sensitivity of
+in a new experiment is in the range
+$\mbox{logit}^{-1}(1.58 \pm 0.3)$, which is $(0.78, 0.87)$. This seems reasonable.
 
 Figure \ref{posterior2}b shows the results.  Our 95\% interval for
-$\pi$ is now $(0.003, 0.020)$; that is, the infection rate is
-estimated to be somewhere between 0.3\% and 2.0\%.
+$\pi$ is now $(0.001, 0.021)$; that is, the infection rate is
+estimated to be somewhere between 0.1\% and 2.1\%.
 
 \section{Prior sensitivity analysis}
 
@@ -483,7 +480,7 @@ general it is best to use prior information to at least roughly
 constrain them.  For this example, we assign independent
 $\mbox{normal}(4,2)$ priors, a distribution that puts 2/3 of its mass
 in the range $4\pm 2$, which, after undoing the logistic
-transformation, corresponds to $(0.881, 0.995)$ on the probability
+transformation, corresponds to $(0.881, 0.997)$ on the probability
 scale, which seem like a suitably broad range for the mean of the
 population distribution of specificity and sensitivity of these tests.
 
@@ -569,29 +566,29 @@ predictors is well known in the MRP literature; see, for example,
 In addition, priors are needed for
 $\sigma^{\textrm{eth}}, \sigma^{\textrm{age}}, \sigma^{\textrm{zip}}$,
 and $\beta$, along with the hierarchical specificity and sensitivity
-parameters from the earlier model.
-
-We code the model in Stan; see Appendix \ref{stan4}.  Unfortunately
-the raw data from Bendavid et al.\ are not currently available, so we
-fit the model to simulated data to check the stability of the
-computation.  We use a $\mbox{normal}(0,2.5)$ prior for the centered
-intercept%
-%
-\footnote{Stan allows direct assignment of distributions to
-  transformed parameters; in this particular case, the transform is
-  affine and thus does not require a Jacobian adjustment.  Because it
-  applies to a compound variable, it is not a proper prior in and of
-  itself.  We add an additional prior for $\beta_2$, but the result is
-  still an improper prior.}
-%  
-$\beta_1 + \beta_2 \cdot \overline{\it male} + \beta_3 \cdot \overline{x}^{\rm zip}$
-(corresponding to an approximate 95\% prior interval of
-$(0.7\%, 99.3\%)$ for the probability that an average person in the
-sample has the antibody), a $\mbox{normal}(0,0.5)$ prior for
-$\beta_2$, and $\mbox{normal}^+(0, 0.5)$ priors for
+parameters from the earlier model.  
+For these hyperparameters, we assign $\mbox{normal}^+(0, 0.5)$ priors for
 $\sigma^{\textrm{eth}}$, $\sigma^{\textrm{age}}$, and
 $\sigma^{\textrm{zip}}$.  These priors allow the prevalence to vary
-moderately by these poststratification variables.
+moderately by these poststratification factors.
+
+We use a unit logistic prior for the centered
+intercept
+$\beta_1 + \beta_2 \cdot \overline{\it male} + \beta_3 \cdot \overline{x}^{\rm zip}$
+(corresponding to a $\mbox{uniform}(0,1)$ prior distribution for the probability that an average person in the
+sample has the antibody), a $\mbox{normal}(0,0.5)$ prior for
+$\beta_2$, and a $\mbox{normal}(0, 0.5/s_{\rm zip})$ for $\beta_3$, where $s_{\rm zip}$ is the standard deviation of $x_{\rm zip}$ in the data.
+
+The point of the scaling of $\beta_2$ and $\beta_3$ is to give some prior regularization on the contribution of each predictor in the data.  Regarding the prior on the intercept:
+Stan allows direct assignment of distributions to
+  transformed parameters; in this particular case, the transform is
+  affine and thus does not require a Jacobian adjustment.  By assigning prior distributions to the centered intercept and two other regression coefficients, we have implicitly assigned a prior distribution to the three parameters, $(\beta_1,\beta_2,\beta_3)$.
+
+We code the model in Stan; see Appendix \ref{stan4}.  
+ Unfortunately
+the raw data from Bendavid et al.\ are not currently available, so we
+fit the model to simulated data to check the stability of the
+computation.
 
 The above model is a start; it could be improved by including
 interactions, following the general ideas of Ghitza and Gelman (2013).
@@ -605,12 +602,12 @@ the county,
 %
 \begin{equation*}
   p^{\textrm{avg}}
-  = \frac{\small\textstyle \sum_j p_j \cdot N_j}
+  = \frac{\small\textstyle \sum_j N_j\pi_j}
          {\small\textstyle \sum_j N_j},
 \end{equation*}
 %
 where $N_j$ is the
-number of people in cell $j$ in the general population, and $p_j$ is
+number of people in cell $j$ in the general population, and $\pi_j$ is
 the prevalence in cell $j$ as computed from the logistic model.  We
 perform this summation in the generated quantities block of the Stan
 model in Appendix \ref{stan4}.
@@ -849,9 +846,7 @@ researchers.
 \bibitem Gelman, A. (2020).  Simple Bayesian analysis inference of
   coronavirus infection rate from the Stanford study in Santa Clara
   county. {\em Statistical Modeling, Causal Inference, and Social
-    Science}, 1 May.  {\small
-    \url{https://statmodeling.stat.columbia.edu/2020/05/01/simple-bayesian-analysis-inference-of-coronavirus-infection-rate-from-the-stanford-}} {\small \url{study-in-santa-clara-county}}
-
+    Science}, 1 May.  {\small \url{https://statmodeling.stat.columbia.edu/2020/05/01/simple-bayesian-analysis-inference-of-coronavirus-infection-rate-from-the-stanford-}} {\small \url{study-in-santa-clara-county}}
   
 \bibitem Gelman, A., Chew, G., and Shnaidman, M. (2004).  Bayesian
   analysis of serial dilution assays. {\em Biometrics} {\bf 60},
