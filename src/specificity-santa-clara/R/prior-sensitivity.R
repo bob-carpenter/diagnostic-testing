@@ -39,8 +39,8 @@ unk_df <- data.frame(pos_tests = unk_mat[ , 1],
                      tests = unk_mat[ , 2],
                      sample_prev = unk_mat[ , 1] / unk_mat[ , 2])
 
-print("translating and compiling meta.stan")
-model <- cmdstan_model("prior-sensitivity.stan")
+print("translating and compiling prior-sensitivity.stan")
+model <- cmdstan_model("../stan/prior-sensitivity.stan")
 
 data <-
 list(K_pos = sens_tests,

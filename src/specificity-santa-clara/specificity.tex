@@ -42,7 +42,7 @@
 
 
 \title{\bf Bayesian analysis of tests with unknown specificity and
-  sensitivity\footnote{We thank Julien Riou, Will Fithian, Sander
+  sensitivity\footnote{To appear in {\em Journal of the Royal Statistical Society C, Applied Statistics}.  We thank Julien Riou, Will Fithian, Sander
     Greenland, Blake McShane, Joseph Candelora, Luiz Max F.~Carvalho,
     and several reviewers for helpful comments and the National
     Science Foundation, Office of Naval Research, National Institutes
@@ -55,7 +55,7 @@
   Carpenter\footnote{Center for Computational Mathematics, Flatiron
     Institute, New York.}  \vspace{.1in}}
 
-\date{1 July 2020}
+\date{8 July 2020}
 
 \begin{document}\sloppy
 \maketitle
@@ -287,7 +287,7 @@ log odds (or logistic) scale,%
  \mbox{logit}(\delta_j) & \sim \mbox{normal}(\mu_{\delta}, \sigma_{\delta}),
 \end{align*}
 %
-with the hyperparameters $\mu$ and $\sigma$ can be estimated from the
+and the hyperparameters $\mu$ and $\sigma$ can be estimated from the
 data.  Stan code is given in Appendix \ref{stan3}.  In general it
 could make sense to allow correlation between $\gamma_j$ and
 $\delta_j$ (Guo, Riebler, and Rue, 2017), but the way the data are
@@ -342,7 +342,7 @@ actually reach the value of 1.
 \end{figure}
 
 We fit the above hierarchical model to the data from Bendavid et al.\
-(2020b), assigning a uniform prior to $\pi$ and weak
+(2020b), assigning a $\mbox{uniform}(0,1)$ prior to $\pi$ and weak
 $\mbox{normal}^+(0,1)$ priors to $\sigma_{\gamma},\sigma_{\delta}$
 (using the notation $\mbox{normal}^+$ for the truncated normal
 distribution constrained to be positive).  We often use half-normal or
@@ -360,6 +360,18 @@ which corresponds to a probability range from 0.60 to 0.92.  The
 $\mbox{normal}^+(0,1)$ hyperpriors weakly pull the specificities and
 sensitivities from different studies toward each other, while allowing
 for a large variation if required by the data.
+
+In addition we need priors on $\mu_{\gamma}$ and $\mu_{\delta}$.  In
+this particular example, once we have constrained the variation in the
+specificities and sensitivities, enough data are available to estimate
+these population means with uniform priors on these parameters, but in
+general it is best to use prior information to at least roughly
+constrain them.  For this example, we assign independent
+$\mbox{normal}(4,2)$ priors, a distribution that puts 2/3 of its mass
+in the range $4\pm 2$, which, after undoing the logistic
+transformation, corresponds to $(0.881, 0.997)$ on the probability
+scale, which seem like a suitably broad range for the mean of the
+population distribution of specificity and sensitivity of these tests.
 
 The resulting posterior inference is shown in Figure
 \ref{posterior2}a.  The 95\% posterior interval for the prevalence is
@@ -471,18 +483,6 @@ $\tau_{\gamma}=\tau_{\delta}=0.5$ to be weakly informative for this
 example, in that they are roughly consistent with inter-site variation
 in specificity in the range 73\% to 99.3\% and of specificity in the
 range 88\% to 99.75\%.
-
-In addition we need priors on $\mu_{\gamma}$ and $\mu_{\delta}$.  In
-this particular example, once we have constrained the variation in the
-specificities and sensitivities, enough data are available to estimate
-these population means with uniform priors on these parameters, but in
-general it is best to use prior information to at least roughly
-constrain them.  For this example, we assign independent
-$\mbox{normal}(4,2)$ priors, a distribution that puts 2/3 of its mass
-in the range $4\pm 2$, which, after undoing the logistic
-transformation, corresponds to $(0.881, 0.997)$ on the probability
-scale, which seem like a suitably broad range for the mean of the
-population distribution of specificity and sensitivity of these tests.
 
 The complexity of this sensitivity analysis might seem intimidating:
 if Bayesian inference is this difficult and this dependent on priors,
@@ -846,7 +846,7 @@ researchers.
 \bibitem Gelman, A. (2020).  Simple Bayesian analysis inference of
   coronavirus infection rate from the Stanford study in Santa Clara
   county. {\em Statistical Modeling, Causal Inference, and Social
-    Science}, 1 May.  {\small \url{https://statmodeling.stat.columbia.edu/2020/05/01/simple-bayesian-analysis-inference-of-coronavirus-infection-rate-from-the-stanford-}} {\small \url{study-in-santa-clara-county}}
+    Science}, 1 May.  {\small \url{https://statmodeling.stat.columbia.edu/2020/05/01/simple-bayesian-analysis-inference-of-coronavirus-infection-rate-from-the-}} {\small \url{stanford-study-in-santa-clara-county}}
   
 \bibitem Gelman, A., Chew, G., and Shnaidman, M. (2004).  Bayesian
   analysis of serial dilution assays. {\em Biometrics} {\bf 60},
@@ -884,11 +884,10 @@ researchers.
 
 \bibitem Lee, S. M. (2020).  Two antibody studies say coronavirus
   infections are more common than we think. Scientists are mad.  {\em
-    BuzzFeed News}, 22 Apr.  {\small
-    \url{https://www.buzzfeednews.com/article/stephaniemlee/coronavirus-antibody-test-santa-clara-los-angeles-stanford}}
+    BuzzFeed News}, 22 Apr.  {\small \url{https://www.buzzfeednews.com/article/stephaniemlee/coronavirus-antibody-test-santa-clara-}} {\small \url{los-angeles-stanford}}
 
 \bibitem Levesque, J., and Maybury, D. W. (2020).  A note on COVID-19
-  seroprevalence studies: a meta-analysis using hierarchical
+  seroprevalence studies: A meta-analysis using hierarchical
   modelling.  {\small
     \url{https://www.medrxiv.org/content/10.1101/2020.05.03.20089201v1.full.pdf}}
 

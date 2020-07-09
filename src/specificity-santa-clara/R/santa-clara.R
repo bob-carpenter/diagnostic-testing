@@ -19,7 +19,7 @@ spin <- function(x, lower=NULL, upper=NULL, conf=0.95){
 }
 
 ## Simple model fit using data from Bendavid et al. paper of 11 Apr 2020
-sc_model <- cmdstan_model("stan/santa-clara.stan")
+sc_model <- cmdstan_model("../stan/santa-clara.stan")
 
 fit_1 <- sc_model$sample(data = list(y_sample=50, n_sample=3330, y_spec=369+30, n_spec=371+30, y_sens=25+78, n_sens=37+85), refresh=0, parallel_chains=4, iter_warmup=1e4, iter_sampling=1e4)
 print(stanfit(fit_1), digits=3)
@@ -30,12 +30,12 @@ subset <- sample(1e4, 1e3)
 x <- as.vector(draws_1[subset,,"spec"])
 y <- as.vector(draws_1[subset,,"p"])
 
-pdf("scatter.pdf", height=3.5, width=4.5)
+pdf("../img/scatter.pdf", height=3.5, width=4.5)
 par(mar=c(3,3,0,1), mgp=c(2, .7, 0), tck=-.02)
 plot(x, y, xlim=c(min(x), 1), ylim=c(0, max(y)), xaxs="i", yaxs="i", xlab=expression(paste("Specificity, ", gamma)), ylab=expression(paste("Prevalence, ", pi)), bty="l", pch=20, cex=.3)
 dev.off()
 
-pdf("hist.pdf", height=3.5, width=5.5)
+pdf("../img/hist.pdf", height=3.5, width=5.5)
 par(mar=c(3,3,0,1), mgp=c(2, .7, 0), tck=-.02)
 hist(y, yaxt="n", yaxs="i", xlab=expression(paste("Prevalence, ", pi)), ylab="", main="")
 dev.off()
@@ -53,7 +53,7 @@ print(spin(draws_2[,,"p"], lower=0, upper=1, conf=0.95))
 
 ## Hierarchical model allowing sensitivity and specificity to vary across studies, fit using data from Bendavid et al. paper of 27 Apr 2020
 
-sc_model_hierarchical <- cmdstan_model("stan/santa-clara-hierarchical.stan")
+sc_model_hierarchical <- cmdstan_model("../stan/santa-clara-hierarchical.stan")
 
 santaclara_data = list(y_sample=50, n_sample=3330, J_spec=14, y_spec=c(0, 368, 30, 70, 1102, 300, 311, 500, 198, 99, 29, 146, 105, 50), n_spec=c(0, 371, 30, 70, 1102, 300, 311, 500, 200, 99, 31, 150, 108, 52), J_sens=4, y_sens=c(0, 78, 27, 25), n_sens=c(0, 85, 37, 35), logit_spec_prior_scale=1, logit_sens_prior_scale=1)
 
@@ -97,7 +97,7 @@ print(spin(draws_3b[,,"sigma_logit_sens"], conf=0.95))
 
 ## MRP model, and allowing prevalence to vary by sex, ethnicity, age category, and zip code.  Model is set up to use the ethnicity, age, and zip categories of Bendavid et al. (2020).
 
-sc_model_hierarchical_mrp <- cmdstan_model("stan/santa-clara-hierarchical-mrp.stan")
+sc_model_hierarchical_mrp <- cmdstan_model("../stan/santa-clara-hierarchical-mrp.stan")
 
 # To fit the model, we need individual-level data.  These data are not publcly available, so just to get the program running, we take the existing 50 positive tests and assign them at random to the 3330 people.
 N <- 3330
