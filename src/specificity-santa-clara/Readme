@@ -1,0 +1,85 @@
+Bayesian analysis of tests with unknown specificity and sensitivity
+======================================================================
+
+Author contact
+----------------------------------------------------------------------
+Andrew Gelman
+Statistics Department
+Columbia University
+Room 1005 SSW, MC 4690
+1255 Amsterdam Avenue
+New York, NY 10027
+U.S.A.
+office phone: +1.212.851.2142
+office fax: +1.212.851.2164
+email: Andrew Gelman <gelman@stat.columbia.edu>
+
+Bob Carpenter
+Center for Computational Mathematics
+Flatiron Institute
+162 Fifth Avenue
+New York, NY 10010
+U.S.A.
+email:  Bob Carpenter <bcarpenter@flatironinstitute.org>
+
+
+Source code and data repository
+----------------------------------------------------------------------
+https://github.com/bob-carpenter/diagnostic-testing
+Tag for paper:  jrss-2020-final
+
+
+Data sets
+----------------------------------------------------------------------
+The small data set was transcribed from:
+
+Bendavid et al. 2020.  COVID-19 antibody seroprevalence in Santa Clara
+Count, Californa.  Version 2, April 27, 2020.
+URL: https://www.medrxiv.org/content/10.1101/2020.04.14.20062463v2.full.pdf
+
+It is used for generating all of the plots and discussion for the
+paper.
+
+The data can be found in R/santa_clara.R and R/prior_sensitivity.R
+
+
+Source code
+----------------------------------------------------------------------
+The programs used to produce the analyses and graphics in the paper
+are included in full.  These take the form of R programs for fitting
+and graphics generation and Stan programs for coding the models
+themselves.  
+
+R scripts
+---------------------------
+To fit the models in the paper and generate the graphics, use
+
+> source('R/santa_clara.R')
+
+To fit the sensitivity analysis and generate the grapics, use
+
+> source('R/prior_sensitivity.R')
+
+* R/santa_clara.R:  code for fitting the models described in the paper
+and generating graphics.
+
+* R/prior_sensitivity.R:  code for the prior sensitivity analysis and
+graphics generation.
+
+Stan programs
+---------------------------
+* stan/prior_sensitivity.stan:  Stan program for generating prior sensitivities
+
+* stan/santa-clara.stan:  simple pooled model
+
+* stan/santa-clara-hierarchical.stan:  hierarchical model
+
+* stan/santa-clara-hierarchical-mrp.stan:  hierarchical model with MRP
+
+
+LaTeX code
+----------------------------------------------------------------------
+
+* specificity.tex:  LaTeX code for the paper
+
+* img/: source images for paper
