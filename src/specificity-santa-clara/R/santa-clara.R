@@ -1,6 +1,5 @@
 library("cmdstanr")
-library("rstan")
-stanfit <- function(fit) rstan::read_stan_csv(fit$output_files())
+
 spin <- function(x, lower=NULL, upper=NULL, conf=0.95){
   x <- sort(as.vector(x))
   if (!is.null(lower)) {
@@ -22,7 +21,7 @@ spin <- function(x, lower=NULL, upper=NULL, conf=0.95){
 sc_model <- cmdstan_model("../stan/santa-clara.stan")
 
 fit_1 <- sc_model$sample(data = list(y_sample=50, n_sample=3330, y_spec=369+30, n_spec=371+30, y_sens=25+78, n_sens=37+85), refresh=0, parallel_chains=4, iter_warmup=1e4, iter_sampling=1e4)
-print(stanfit(fit_1), digits=3)
+fit_1$print(digits=3)
 
 # Inference for the population prevalance
 draws_1 <- fit_1$draws()
@@ -46,8 +45,8 @@ print(spin(draws_1[,,"p"], lower=0, upper=1, conf=0.95))
 # Simple model fit using pooled specificity and sensitivity data from Bendavid et al. paper of 27 Apr 2020
 
 fit_2 <- sc_model$sample(data = list(y_sample=50, n_sample=3330, y_spec=3308, n_spec=3324, y_sens=130, n_sens=157), refresh=0, parallel_chains=4, iter_warmup=1e4, iter_sampling=1e4)
+fit_2$print(digits=3)
 
-print(stanfit(fit_2), digits=3)
 draws_2 <- fit_2$draws()
 print(spin(draws_2[,,"p"], lower=0, upper=1, conf=0.95))
 
@@ -58,8 +57,8 @@ sc_model_hierarchical <- cmdstan_model("../stan/santa-clara-hierarchical.stan")
 santaclara_data = list(y_sample=50, n_sample=3330, J_spec=14, y_spec=c(0, 368, 30, 70, 1102, 300, 311, 500, 198, 99, 29, 146, 105, 50), n_spec=c(0, 371, 30, 70, 1102, 300, 311, 500, 200, 99, 31, 150, 108, 52), J_sens=4, y_sens=c(0, 78, 27, 25), n_sens=c(0, 85, 37, 35), logit_spec_prior_scale=1, logit_sens_prior_scale=1)
 
 fit_3a<- sc_model_hierarchical$sample(data=santaclara_data, refresh=0, parallel_chains=4, iter_warmup=1e4, iter_sampling=1e4)
+fit_3a$print(digits=3)
 
-print(stanfit(fit_3a), digits=3)
 draws_3a <- fit_3a$draws()
 print(spin(draws_3a[,,"p"], lower=0, upper=1, conf=0.95))
 
@@ -68,16 +67,15 @@ print(spin(draws_3a[,,"p"], lower=0, upper=1, conf=0.95))
 santaclara_data$logit_spec_prior_scale <- 0.3
 santaclara_data$logit_sens_prior_scale <- 0.3
 fit_3b <- sc_model_hierarchical$sample(data=santaclara_data, refresh=0, parallel_chains=4, iter_warmup=1e4, iter_sampling=1e4)
+fit_3b$print(digits=3)
 
-print(stanfit(fit_3b), digits=3)
 draws_3b <- fit_3b$draws()
 print(spin(draws_3b[,,"p"], lower=0, upper=1, conf=0.95))
 
 # Summarize the fits
 
-print(stanfit(fit_3a), pars=c("p", "spec[1]", "sens[1]", "mu_logit_spec", "mu_logit_sens", "sigma_logit_spec", "sigma_logit_sens"), digits=3)
-print(stanfit(fit_3b), pars=c("p", "spec[1]", "sens[1]", "mu_logit_spec", "mu_logit_sens", "sigma_logit_spec", "sigma_logit_sens"), digits=3)
-
+fit_3a$print(variables=c("p", "spec[1]", "sens[1]", "mu_logit_spec", "mu_logit_sens", "sigma_logit_spec", "sigma_logit_sens"), digits=3)
+fit_3b$print(variables=c("p", "spec[1]", "sens[1]", "mu_logit_spec", "mu_logit_sens", "sigma_logit_spec", "sigma_logit_sens"), digits=3)
 
 print(spin(draws_3a[,,"p"], lower=0, upper=1, conf=0.95))
 print(spin(draws_3a[,,"spec[1]"], lower=0, upper=1, conf=0.95))
@@ -135,6 +133,6 @@ santaclara_mrp_data <- list(N=N, y=y, male=male, eth=eth, age=age, zip=zip, N_zi
 fit_4 <- sc_model_hierarchical_mrp$sample(data=santaclara_mrp_data, refresh=0, parallel_chains=4)
 
 # Show inferences for some model parameters. along with p_avg, the population prevalence, also we look at the inferences for the first three poststratification cells just to check that everything makes sense
-print(stanfit(fit_4), pars=c("p_avg", "b", "a_age", "a_eth", "sigma_eth", "sigma_age", "sigma_zip", "mu_logit_spec", "sigma_logit_spec",  "mu_logit_sens", "sigma_logit_sens", "p_pop[1]", "p_pop[2]", "p_pop[3]"), digits=3)
+fit_4$print(variables=c("p_avg", "b", "a_age", "a_eth", "sigma_eth", "sigma_age", "sigma_zip", "mu_logit_spec", "sigma_logit_spec",  "mu_logit_sens", "sigma_logit_sens", "p_pop[1]", "p_pop[2]", "p_pop[3]"), digits=3)
 draws_4 <- fit_4$draws()
 print(spin(draws_4[,,"p_avg"], lower=0, upper=1, conf=0.95))
